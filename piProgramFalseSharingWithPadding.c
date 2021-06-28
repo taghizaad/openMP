@@ -15,11 +15,16 @@ double step;
 
 void main() {
     int i, nthreads;
+    /* I added a little array block call PAD. Now it is a 2D array.
+     * I set pad to be the number of double precision words in a cache line
+     * I now guarantee that as I go to each successive element in the array,
+     * they are sitting on a different cache line
+    * */
     double pi, sum[NUM_THREADS][PAD];
     step = 1.0 / (double) num_steps;
     omp_set_num_threads(NUM_THREADS);
     double startTime = omp_get_wtime();
-#pragma omp parallel
+    #pragma omp parallel
     {
         int i, id, nthrds;
         double x;

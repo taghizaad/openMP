@@ -1,3 +1,9 @@
+/*
+ * in this program we are going to calculate the integral
+ * of the following function between 0 to 1
+ *  f(x) = 4/(1 + x*x)
+ * with analytical solution we know this integral is equal pi
+ * */
 
 #include <stdio.h>
 #include <omp.h>
@@ -5,31 +11,18 @@
 static long num_steps = 100000000;
 double step;
 
-#define NUM_THREADS 2
-
 void main() {
-    int i, nthreads;
-    double pi, sum[NUM_THREADS];
+    int i;
+    double pi, x, sum = 0.0;
     step = 1.0 / (double) num_steps;
-    omp_set_num_threads(NUM_THREADS);
-    double startTime = omp_get_wtime();
-#pragma omp parallel
-    {
-        int i, id, nthrds;
-        double x;
-        id = omp_get_thread_num();
-        nthrds = omp_get_num_threads();
-        if (id == 0) nthreads = nthrds;
-        for (i = id, sum[id] = 0.0; i < num_steps; i = i + nthrds) {
-            x = (i + .5) * step;
-            sum[id] += 4.0 / (1.0 + x * x);
-        }
+    double startTime = omp_get_wtime(); //time in seconds since a fixed point in the past
+
+    for (i = 0; i < num_steps; i++) {
+        x = (i + .5) * step;
+        sum += 4.0 / (1.0 + x * x);
     }
-    for (i = 0, pi = 0.0; i < nthreads; i++) {
-        pi += sum[i] * step;
-    }
+    pi = step * sum;
     double endTime = omp_get_wtime();
-    printf("nthread: %d\n", nthreads);
     printf("pi value is: %f\n", pi);
     printf("time consumed: %f", endTime - startTime);
 }
