@@ -18,6 +18,10 @@ void main() {
 #pragma omp parallel
     {
         int i, id, nthrds;
+        /*
+         * Now each thread has it's own copy of sum and because it's on stack
+         * and it's not on the heap so the chances having false sharing are zilch
+         * */
         double x, sum;
         id = omp_get_thread_num();
         nthrds = omp_get_num_threads();
@@ -26,7 +30,13 @@ void main() {
             x = (i + .5) * step;
             sum += 4.0 / (1.0 + x * x);
         }
-
+        /*
+         * I got to save sum into global pi. That's a potential for race condition
+         * because if I have all the threads with undisciplined access like summing
+         * pi willy-nilly, I could be halfway through updating one sum when I start
+         * updating on the other one. It's messy so I have to have mutual exclusion
+         * of that sum in the pi
+         * */
         #pragma omp critical
         pi += sum * step;
     }
