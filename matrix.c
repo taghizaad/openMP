@@ -65,15 +65,15 @@ float *neg_vector(float *vec, int vec_length) {
 }
 
 float *mul_vector(float *vec1, float *vec2, int row1, int col1, int col2) {
-    float t = 0;
     float *result= (float *) calloc(row1 * col2, sizeof(float));
     for (int i = 0; i < row1; ++i) {
         for (int j = 0; j < col2; ++j) {
+            float t=0;
             for (int k = 0; k < col1; ++k) {
                 t += vec1[(i * col1) + k] * vec2[(k * col2) + j];
             }
-            result[(i * row1) + j] = t;
-            t = 0;
+            printf("%d\n", (i * col2) + j);
+            result[(i * col2) + j] = t;
         }
     }
     return result;
@@ -98,7 +98,7 @@ void main() {
     }*/
 
     float *vec1, *vec2;
-    int row1=2, col1=3,col2=2;
+    int row1=5, col1=4,col2=3;
     vec1 = init_vector(row1, col1, 5);
     vec2 = init_vector(col1, col2, 7);
     show_vector(vec1, row1, col1);
@@ -106,7 +106,10 @@ void main() {
     show_vector(vec2,col1,col2);
     printf("---------------\n");
     float *mul_vec = mul_vector(vec1, vec2, row1, col1, col2);
-    show_vector(mul_vec, row1, col2);
+//    show_vector(mul_vec, row1, col2);
+    for (int i = 0; i < row1*col2; ++i) {
 
+        printf("%f\n",mul_vec[i]);
+    }
 
 }
