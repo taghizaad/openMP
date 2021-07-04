@@ -1,48 +1,39 @@
 #include <stdio.h>
 #include <malloc.h>
+#include <stdlib.h>
+#include <time.h>
 
-float **createArray(int m, int n, float value) {
-    float *values = calloc(m * n, sizeof(float));
-    float **rows = malloc(n * sizeof(float *));
-    for (int i = 0; i < n; ++i) {
-        rows[i] = values + i * m;
-    }
-    for (int i = 0; i < m; ++i) {
-        for (int j = 0; j < n; ++j) {
-            rows[i][j] = value;
+
+void init_matrix(float *matrix, int rows, int cols) {
+    int i,j;
+    srand(time(0));
+    for(i=0; i < rows; i++) {
+        for(j=0; j < cols; j++) {
+            matrix[i*cols +j] = rand();
         }
     }
-    return rows;
 }
 
-int **makeMatrix(int row, int col, int value) {
-    int **matrix;
-    matrix = (int **) calloc(col, sizeof(int *));
-    for (int i = 0; i < col; i++) {
-        matrix[i] = (int *) calloc(row, sizeof(int));
-    }
-    for (int i = 0; i < row; ++i) {
-        for (int j = 0; j < col; ++j) {
-            matrix[i][j] = value;
-        }
-    }
-    return matrix;
-}
-
-void showMatrix(int **matrix, int row, int col) {
-    for (int i = 0; i < row; ++i) {
-        for (int j = 0; j < col; ++j) {
-            printf("%d ", (matrix)[i][j]);
+void show_matrix(float *matrix, int row, int col){
+    for(int i=0; i < row; i++) {
+        for(int j=0; j < col; j++) {
+            printf("%f ",matrix[i+j]);
         }
         printf("\n");
     }
 }
 
 void main() {
-    int row = 3, col = 2, value = 7.2;
-    float **matrix;
-    matrix = makeMatrix(row, col, value);
-//    matrix = createArray(row, col, value);
-//    showMatrix(matrix, row , col);
+
+    float *matrix;
+    int rows = 3, cols = 2;
+    matrix = malloc(sizeof(float)*rows*cols);
+    if(matrix != NULL) {
+        init_matrix(matrix, rows, cols);
+        show_matrix(matrix,rows, cols);
+    }
+
+
+
 
 }
