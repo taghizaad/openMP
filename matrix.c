@@ -1,29 +1,44 @@
 #include <stdio.h>
 #include <malloc.h>
+#include <stdlib.h>
+#include <time.h>
 
-float **createArray(int m, int n) {
-    float *values = calloc(m * n, sizeof(float));
-    float **rows = malloc(n * sizeof(float *));
-    for (int i = 0; i < n; ++i) {
-        rows[i] = values + i * m;
-    }
-    return rows;
-}
-
-void showMat(float **mat, int row, int col) {
+/**
+ *  this method shows a vector as a matrix by row*col
+ * @param vector
+ * @param row
+ * @param col
+ */
+void show_vector(float *vector, int row, int col) {
     for (int i = 0; i < row; i++) {
         for (int j = 0; j < col; j++) {
-            printf("%d ", *(*(mat + i) + j));
+            printf("%f ", vector[i + j]);
         }
         printf("\n");
     }
 }
 
+
+/**
+ *
+ * @param rows
+ * @param cols
+ * @return  a vector of float initialized to the zero value
+ */
+float *init_vector(int rows, int cols) {
+    float *vector = (float *) calloc(rows * cols, sizeof(float));
+    return vector;
+}
+
+/**
+ * main method
+ */
 void main() {
-    float **arr = createArray(2, 2);
-    arr[0][0] = 12;
-    arr[0][1] = 70;
-    arr[1][0] = 53;
-    arr[1][1] = 27;
-    showMat(arr, 2, 2);
+
+    float *vector;
+    int rows = 2, cols = 10;
+    vector = init_vector(rows, cols);
+    if (vector != NULL) {
+        show_vector(vector, rows, cols);
+    }
 }
