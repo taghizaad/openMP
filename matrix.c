@@ -41,7 +41,7 @@ float *init_vector(int rows, int cols, float val) {
 }
 
 float *add_vector(float *vec1, float *vec2, int vec_length) {
-    float *result;
+    float *result= (float *) calloc(vec_length, sizeof(float));
     for (int i = 0; i < vec_length; ++i) {
         result[i] = vec1[i] + vec2[i];
     }
@@ -49,7 +49,7 @@ float *add_vector(float *vec1, float *vec2, int vec_length) {
 }
 
 float *sub_vector(float *vec1, float *vec2, int vec_length) {
-    float *result;
+    float *result= (float *) calloc(vec_length, sizeof(float));
     for (int i = 0; i < vec_length; ++i) {
         result[i] = vec1[i] - vec2[i];
     }
@@ -57,7 +57,7 @@ float *sub_vector(float *vec1, float *vec2, int vec_length) {
 }
 
 float *neg_vector(float *vec, int vec_length) {
-    float *result;
+    float *result= (float *) calloc(vec_length, sizeof(float));
     for (int i = 0; i < vec_length; ++i) {
         result[i] = -vec[i];
     }
