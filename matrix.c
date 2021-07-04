@@ -12,7 +12,7 @@
 void show_vector(float *vector, int row, int col) {
     for (int i = 0; i < row; i++) {
         for (int j = 0; j < col; j++) {
-            printf("%f ", vector[i + j]);
+            printf("%f ", vector[i*col + j]);
         }
         printf("\n");
     }
@@ -72,7 +72,6 @@ float *mul_vector(float *vec1, float *vec2, int row1, int col1, int col2) {
             for (int k = 0; k < col1; ++k) {
                 t += vec1[(i * col1) + k] * vec2[(k * col2) + j];
             }
-            printf("%d\n", (i * col2) + j);
             result[(i * col2) + j] = t;
         }
     }
@@ -106,10 +105,6 @@ void main() {
     show_vector(vec2,col1,col2);
     printf("---------------\n");
     float *mul_vec = mul_vector(vec1, vec2, row1, col1, col2);
-//    show_vector(mul_vec, row1, col2);
-    for (int i = 0; i < row1*col2; ++i) {
-
-        printf("%f\n",mul_vec[i]);
-    }
+    show_vector(mul_vec, row1, col2);
 
 }
