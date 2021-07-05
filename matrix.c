@@ -1,80 +1,75 @@
 #include <stdio.h>
-#include <malloc.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
+#include <errno.h>
+#include <synchapi.h>
 
-/**
- *  this method shows a vector as a matrix by row*col
- * @param vector
- * @param row
- * @param col
- */
-void show_vector(float *vector, int row, int col) {
-    for (int i = 0; i < row; i++) {
-        for (int j = 0; j < col; j++) {
-            printf("%f ", vector[i * col + j]);
-        }
-        printf("\n");
+float **create_empty_matrix(int row, int col) {
+    float **matrix;
+    matrix = (float **) malloc(sizeof(float *) * row);
+    for (int i = 0; i < row; i++)
+        matrix[i] = (float *) malloc(sizeof(float) * col);
+    return matrix;
+}
+
+float **create_random_matrix(int row, int col) {
+    float **matrix;
+    matrix = (float **) malloc(sizeof(float *) * row);
+    for (int i = 0; i < row; i++)
+        matrix[i] = (float *) malloc(sizeof(float) * col);
+    /* Initializes random number generator */
+    srand(time(0));
+    for (size_t i = 0; i < row; ++i)
+        for (size_t j = 0; j < col; ++j)
+            matrix[i][j] = (float) rand() / (float) (RAND_MAX / 5.0);
+    return matrix;
+}
+
+void show_matrix(float **matrix, int row, int col) {
+    printf("size of matrix is %d*%d", row, col);
+    puts("");
+    for (size_t i = 0; i < row; ++i) {
+        for (size_t j = 0; j < col; ++j)
+            printf("%-3f ", matrix[i][j]);
+        puts("");
     }
 }
 
-void first_n(int number, int **vector) {
-    int i;
-    *vector = (int *) malloc(number * sizeof(int));
-    for (i = 0; i < number; i++) {
-        (*vector)[i] = i;
+float **add_matrix(float **mat1, float **mat2, int row1, int col1, int row2, int col2) {
+    if (row1 != row2 || col1 != col2) {
+        fprintf(stderr, "incompatible matrix sizes for addition\n");
+        exit(EXIT_FAILURE);
     }
-}
-
-/**
- *
- * @param rows
- * @param cols
- * @return  a vector of float initialized to the zero value
- */
-float *init_vector(int rows, int cols, float val) {
-    float *vector = (float *) calloc(rows * cols, sizeof(float));
-    for (int i = 0; i < rows * cols; ++i) {
-        vector[i] = val;
-    }
-    return vector;
-}
-
-float *add_vector(float *vec1, float *vec2, int vec_length) {
-    float *result = (float *) calloc(vec_length, sizeof(float));
-    for (int i = 0; i < vec_length; ++i) {
-        result[i] = vec1[i] + vec2[i];
-    }
+    float **result = create_empty_matrix(row1, col1);
+    for (size_t i = 0; i < row1; ++i)
+        for (size_t j = 0; j < col1; ++j)
+            result[i][j] = mat1[i][j] + mat2[i][j];
     return result;
 }
 
-float *sub_vector(float *vec1, float *vec2, int vec_length) {
-    float *result = (float *) calloc(vec_length, sizeof(float));
-    for (int i = 0; i < vec_length; ++i) {
-        result[i] = vec1[i] - vec2[i];
+float **sub_matrix(float **mat1, float **mat2, int row1, int col1, int row2, int col2) {
+    if (row1 != row2 || col1 != col2) {
+        fprintf(stderr, "incompatible matrix sizes for addition\n");
+        exit(EXIT_FAILURE);
     }
+    float **result = create_empty_matrix(row1, col1);
+    for (size_t i = 0; i < row1; ++i)
+        for (size_t j = 0; j < col1; ++j)
+            result[i][j] = mat1[i][j] - mat2[i][j];
     return result;
 }
 
-float *neg_vector(float *vec, int vec_length) {
-    float *result = (float *) calloc(vec_length, sizeof(float));
-    for (int i = 0; i < vec_length; ++i) {
-        result[i] = -vec[i];
+float **mul_matrix(float **mat1, float **mat2, size_t row1, size_t col1, size_t row2, size_t col2) {
+    if (col1 != row2) {
+        fprintf(stderr, "incompatible matrix sizes for multiplication\n");
+        exit(EXIT_FAILURE);
     }
-    return result;
-}
-
-float *mul_vector(float *vec1, float *vec2, int row1, int col1, int col2) {
-    float *result = (float *) calloc(row1 * col2, sizeof(float));
-    for (int i = 0; i < row1; ++i) {
-        for (int j = 0; j < col2; ++j) {
-            float t = 0;
-            for (int k = 0; k < col1; ++k) {
-                t += vec1[(i * col1) + k] * vec2[(k * col2) + j];
-            }
-            result[(i * col2) + j] = t;
-        }
-    }
+    float **result = create_empty_matrix(row1, col2);
+    for (int i = 0; i < row1; ++i)
+        for (int j = 0; j < col2; ++j)
+            for (int k = 0; k < col1; ++k)
+                result[i][j] += mat1[i][k] * mat2[k][j];
     return result;
 }
 
@@ -92,16 +87,16 @@ float *mul_vector(float *vec1, float *vec2, int row1, int col1, int col2) {
  */
 float *sherman_morrison(float *A_inv, float *u, float *v, int row_u, int col_u) {
 
-    float *p_denominator = mul_vector(mul_vector(v, A_inv, col_u, row_u, row_u), u, col_u, row_u, col_u);
+/*    float *p_denominator = mul_matrix(mul_matrix(v, A_inv, col_u, row_u, row_u), u, col_u, row_u, col_u);
     float denominator = 1 + *p_denominator;
     if (denominator == 0) {
         return NULL;
     }
     float *p_numerator =
-            mul_vector(mul_vector(mul_vector(A_inv, u, row_u, row_u, col_u), v, row_u, col_u, row_u), A_inv, row_u,
+            mul_matrix(mul_matrix(mul_matrix(A_inv, u, row_u, row_u, col_u), v, row_u, col_u, row_u), A_inv, row_u,
                        row_u, row_u);
-    float *rank_one_update = sub_vector(A_inv, p_numerator, row_u * row_u);
-    return rank_one_update;
+    float *rank_one_update = sub_matrix(A_inv, p_numerator, row_u * row_u);
+    return rank_one_update;*/
 }
 
 
@@ -122,6 +117,7 @@ void main() {
 
     }*/
 
+/*
     float *vec1, *vec2;
     int row1 = 3, col1 = 1, col2 = 2;
     vec1 = init_vector(row1, col1, 5);
@@ -132,5 +128,14 @@ void main() {
     printf("---------------\n");
     float *mul_vec = mul_vector(vec1, vec2, row1, col1, col2);
     show_vector(mul_vec, row1, col2);
+*/
+    float **mat1 = create_random_matrix(3, 7);
+    show_matrix(mat1, 3, 7);
+    Sleep(5000);
+    float **mat2 = create_random_matrix(7, 7);
+    show_matrix(mat2, 3, 7);
+    float **addMatrix = sub_matrix(mat1, mat2, 3, 7, 3, 7);
+    show_matrix(addMatrix, 3, 7);
+
 
 }
