@@ -84,27 +84,31 @@ float **readmatrix(size_t *rows, size_t *cols, const char *filename)
     return matrix;
 }
 
-int main(void)
-{
+int main(void) {
 
     size_t cols, rows;
-    float **matrix = readmatrix(&rows, &cols, "A_inv.dat");
+    float **matrix = readmatrix(&rows, &cols, "u.dat");
 
-    if(matrix == NULL)
-    {
+    if (matrix == NULL) {
         fprintf(stderr, "could not read matrix\n");
         return 1;
     }
+    float *vector;
+    if (cols == 1) {
+         vector= (float *) malloc(sizeof(float) * rows);
+        for (size_t i = 0; i < rows; ++i) {
+            for (size_t j = 0; j < cols; ++j) {
+                vector[i] = matrix[i][j];
+//                printf("%-3f ", matrix[i][j]);
+            }
+            puts("");
 
-
-    for(size_t i = 0; i < rows; ++i)
-    {
-        for(size_t j = 0; j < cols; ++j)
-            printf("%-3f ", matrix[i][j]);
-        puts("");
-
+        }
     }
-
+    for (int i = 0; i < rows; ++i) {
+        printf("%-3f ", vector[i]);
+        puts("");
+    }
 
     // freeing memory
     for(size_t i = 0; i < rows; ++i)
