@@ -4,11 +4,18 @@
 
 void transpose(double *A, double *B, int n) {
     int i, j;
-    for (i = 0; i < n; i++) {
-        for (j = 0; j < n; j++) {
-            B[j * n + i] = A[i * n + j];
+    double start_time = omp_get_wtime();
+#pragma omp parallel shared(A, B) private(i, j)
+    {
+#pragma omp for  schedule(static)
+        for (i = 0; i < n; i++) {
+            for (j = 0; j < n; j++) {
+                B[j * n + i] = A[i * n + j];
+            }
         }
     }
+    double end_time = omp_get_wtime();
+    printf("transpose_matrix time: %f\n", end_time - start_time);
 }
 
 void gemm(double *A, double *B, double *C, int n) {
@@ -83,18 +90,20 @@ void gemmT_omp(double *A, double *B, double *C, int n) {
 
 int main() {
     int i, n;
-    double *A, *B, *C, dtime;
+    double *A, *B, *C, dtime, *B2;
 
-    n = 512;
+    n = 20000;
     A = (double *) malloc(sizeof(double) * n * n);
     B = (double *) malloc(sizeof(double) * n * n);
     C = (double *) malloc(sizeof(double) * n * n);
     for (i = 0; i < n * n; i++) {
         A[i] = 1.0*rand()/RAND_MAX;
-        B[i] = 1.0*rand()/RAND_MAX;
+//        B[i] = 1.0*rand()/RAND_MAX;
     }
 
-    dtime = omp_get_wtime();
+    transpose(A, B, n);
+
+/*    dtime = omp_get_wtime();
     gemm(A, B, C, n);
     dtime = omp_get_wtime() - dtime;
     printf("%f\n", dtime);
@@ -112,7 +121,7 @@ int main() {
     dtime = omp_get_wtime();
     gemmT_omp(A, B, C, n);
     dtime = omp_get_wtime() - dtime;
-    printf("%f\n", dtime);
+    printf("%f\n", dtime);*/
 
     return 0;
 
