@@ -85,7 +85,6 @@ float **readmatrix(size_t *rows, size_t *cols, const char *filename)
 }
 
 int main(void) {
-
     size_t cols, rows;
     float **matrix = readmatrix(&rows, &cols, "u.dat");
 
