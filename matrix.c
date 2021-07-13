@@ -6,23 +6,23 @@
 #include <synchapi.h>
 #include <omp.h>
 
-float **create_empty_matrix(size_t row, size_t col) {
-    float **matrix;
-    matrix = (float **) malloc(sizeof(float *) * row);
+double **create_empty_matrix(size_t row, size_t col) {
+    double **matrix;
+    matrix = (double **) malloc(sizeof(double *) * row);
     for (int i = 0; i < row; i++)
-        matrix[i] = (float *) malloc(sizeof(float) * col);
+        matrix[i] = (double *) malloc(sizeof(double) * col);
     return matrix;
 }
 
-float *create_empty_vector(size_t len) {
-    float *vector;
-    vector = (float *) malloc(sizeof(float) * len);
+double *create_empty_vector(size_t len) {
+    double *vector;
+    vector = (double *) malloc(sizeof(double) * len);
     return vector;
 }
 
-float *create_random_vector(size_t len) {
-    float *vector;
-    vector = (float *) malloc(sizeof(float) * len);
+double *create_random_vector(size_t len) {
+    double *vector;
+    vector = (double *) malloc(sizeof(double) * len);
     srand(time(NULL));
     for (int i = 0; i < len; i++) {
         vector[i] = 5.0 * rand() / RAND_MAX;
@@ -30,9 +30,9 @@ float *create_random_vector(size_t len) {
     return vector;
 }
 
-float *create_random_boolean_vector(size_t len) {
-    float *vector;
-    vector = (float *) malloc(sizeof(float) * len);
+double *create_random_boolean_vector(size_t len) {
+    double *vector;
+    vector = (double *) malloc(sizeof(double) * len);
     srand(time(NULL));
     for (int i = 0; i < len; i++) {
         vector[i] = rand() & 1;
@@ -40,11 +40,11 @@ float *create_random_boolean_vector(size_t len) {
     return vector;
 }
 
-float **create_random_matrix(int row, int col) {
-    float **matrix;
-    matrix = (float **) malloc(sizeof(float *) * row);
+double **create_random_matrix(int row, int col) {
+    double **matrix;
+    matrix = (double **) malloc(sizeof(double *) * row);
     for (int i = 0; i < row; i++)
-        matrix[i] = (float *) malloc(sizeof(float) * col);
+        matrix[i] = (double *) malloc(sizeof(double) * col);
     /* Initializes random number generator */
     srand(time(NULL));
     for (size_t i = 0; i < row; i++)
@@ -53,7 +53,7 @@ float **create_random_matrix(int row, int col) {
     return matrix;
 }
 
-void show_matrix(float **matrix, size_t row, size_t col) {
+void show_matrix(double **matrix, size_t row, size_t col) {
     puts("");
     for (size_t i = 0; i < row; i++) {
         for (size_t j = 0; j < col; j++)
@@ -62,69 +62,58 @@ void show_matrix(float **matrix, size_t row, size_t col) {
     }
 }
 
-void show_vector(float *matrix, size_t len) {
+void show_vector(double *matrix, size_t len) {
     puts("");
     for (size_t i = 0; i < len; i++) {
-        printf("%-3f ", matrix[i]);
+        printf("%lf ", matrix[i]);
         puts("");
     }
 }
 
-float **sub_matrix_parallel(float **mat1, float **mat2, int row1, int col1, int row2, int col2) {
+double **sub_matrix_parallel(double **mat1, double **mat2, int row1, int col1, int row2, int col2) {
     if (row1 != row2 || col1 != col2) {
         fprintf(stderr, "incompatible matrix sizes for subtraction\n");
         exit(EXIT_FAILURE);
     }
-    float **result = create_empty_matrix(row1, col1);
-    int i, j;
-#pragma omp parallel shared(result, mat1, mat2) private(i, j)
-    {
-#pragma omp for schedule(static)
-        for (i = 0; i < row1; i++)
-            for (j = 0; j < col1; j++)
-                result[i][j] = mat1[i][j] - mat2[i][j];
-    }
-
+    double **result = create_empty_matrix(row1, col1);
+#pragma omp parallel for
+    for (int i = 0; i < row1; i++)
+        for (int j = 0; j < col1; j++)
+            result[i][j] = mat1[i][j] - mat2[i][j];
     return result;
 }
 
-float **sub_matrix_sequential(float **mat1, float **mat2, int row1, int col1, int row2, int col2) {
+double **sub_matrix_sequential(double **mat1, double **mat2, int row1, int col1, int row2, int col2) {
     if (row1 != row2 || col1 != col2) {
         fprintf(stderr, "incompatible matrix sizes for subtraction\n");
         exit(EXIT_FAILURE);
     }
-    float **result = create_empty_matrix(row1, col1);
-    int i, j;
-        for (i = 0; i < row1; i++)
-            for (j = 0; j < col1; j++)
-                result[i][j] = mat1[i][j] - mat2[i][j];
+    double **result = create_empty_matrix(row1, col1);
+    for (int i = 0; i < row1; i++)
+        for (int j = 0; j < col1; j++)
+            result[i][j] = mat1[i][j] - mat2[i][j];
     return result;
 }
 
-float **add_matrix_parallel(float **mat1, float **mat2, int row1, int col1, int row2, int col2) {
+double **add_matrix_parallel(double **mat1, double **mat2, int row1, int col1, int row2, int col2) {
     if (row1 != row2 || col1 != col2) {
         fprintf(stderr, "incompatible matrix sizes for subtraction\n");
         exit(EXIT_FAILURE);
     }
-    float **result = create_empty_matrix(row1, col1);
-    int i, j;
-#pragma omp parallel shared(result, mat1, mat2) private(i, j)
-    {
-#pragma omp for schedule(static)
-        for (i = 0; i < row1; i++)
-            for (j = 0; j < col1; j++)
-                result[i][j] = mat1[i][j] + mat2[i][j];
-    }
-
+    double **result = create_empty_matrix(row1, col1);
+#pragma omp parallel for
+    for (int i = 0; i < row1; i++)
+        for (int j = 0; j < col1; j++)
+            result[i][j] = mat1[i][j] + mat2[i][j];
     return result;
 }
 
-float **add_matrix_sequential(float **mat1, float **mat2, int row1, int col1, int row2, int col2) {
+double **add_matrix_sequential(double **mat1, double **mat2, int row1, int col1, int row2, int col2) {
     if (row1 != row2 || col1 != col2) {
         fprintf(stderr, "incompatible matrix sizes for subtraction\n");
         exit(EXIT_FAILURE);
     }
-    float **result = create_empty_matrix(row1, col1);
+    double **result = create_empty_matrix(row1, col1);
     int i, j;
     for (i = 0; i < row1; i++)
         for (j = 0; j < col1; j++)
@@ -132,12 +121,12 @@ float **add_matrix_sequential(float **mat1, float **mat2, int row1, int col1, in
     return result;
 }
 
-float **mul_matrix_old(float **mat1, float **mat2, size_t row1, size_t col1, size_t row2, size_t col2) {
+double **mul_matrix_old(double **mat1, double **mat2, size_t row1, size_t col1, size_t row2, size_t col2) {
     if (col1 != row2) {
         fprintf(stderr, "incompatible matrix sizes for multiplication\n");
         exit(EXIT_FAILURE);
     }
-    float **result = create_empty_matrix(row1, col2);
+    double **result = create_empty_matrix(row1, col2);
     for (int i = 0; i < row1; i++)
         for (int j = 0; j < col2; j++)
             for (int k = 0; k < col1; k++)
@@ -145,257 +134,177 @@ float **mul_matrix_old(float **mat1, float **mat2, size_t row1, size_t col1, siz
     return result;
 }
 
-float **mul_matrix_matrix(float **mat1, float **mat2, size_t row1, size_t col1, size_t row2, size_t col2) {
+double **mul_matrix_matrix(double **mat1, double **mat2, size_t row1, size_t col1, size_t row2, size_t col2) {
     if (col1 != row2) {
         fprintf(stderr, "incompatible matrix sizes for multiplication\n");
         exit(EXIT_FAILURE);
     }
-    float **result = create_empty_matrix(row1, col2);
-    int i, j, k;
+    double **result = create_empty_matrix(row1, col2);
 
-#pragma omp parallel shared(result, mat1, mat2) private(i, j, k)
-    {
-#pragma omp for schedule(static)
-        for (i = 0; i < row1; i++)
-            for (j = 0; j < col2; j++)
-                for (k = 0; k < col1; k++)
-                    result[i][j] += mat1[i][k] * mat2[k][j];
-    }
+#pragma omp parallel for
+    for (int i = 0; i < row1; i++)
+        for (int j = 0; j < col2; j++)
+            for (int k = 0; k < col1; k++)
+                result[i][j] += mat1[i][k] * mat2[k][j];
     return result;
 }
 
-float **mul_matrix_scalar_parallel(float **mat1, float scalar, size_t row1, size_t col1) {
-    float **result = create_empty_matrix(row1, col1);
-    int i, j;
-#pragma omp parallel shared(result, mat1) private(i, j)
-    {
-#pragma omp for schedule(static)
+double **mul_matrix_scalar_parallel(double **mat1, double scalar, size_t row1, size_t col1) {
+    double **result = create_empty_matrix(row1, col1);
+#pragma omp parallel for
+    for (int i = 0; i < row1; i++)
+        for (int j = 0; j < col1; j++)
+            result[i][j] = mat1[i][j] * scalar;
 
-        for (i = 0; i < row1; i++)
-            for (j = 0; j < col1; j++)
-                result[i][j] = mat1[i][j] * scalar;
-    }
     return result;
 }
 
-float **mul_matrix_scalar_sequential(float **mat1, float scalar, size_t row1, size_t col1) {
-    float **result = create_empty_matrix(row1, col1);
-        for (int i = 0; i < row1; i++)
-            for (int j = 0; j < col1; j++)
-                result[i][j] = mat1[i][j] * scalar;
+double **mul_matrix_scalar_sequential(double **mat1, double scalar, size_t row1, size_t col1) {
+    double **result = create_empty_matrix(row1, col1);
+    for (int i = 0; i < row1; i++)
+        for (int j = 0; j < col1; j++)
+            result[i][j] = mat1[i][j] * scalar;
     return result;
 }
 
-float **transpose_matrix_sequential(float **mat, size_t row_v, size_t col_v) {
+double **transpose_matrix_sequential(double **mat, size_t row_v, size_t col_v) {
 
-    float **result = create_empty_matrix(col_v, row_v);
-//    double start_time = omp_get_wtime();
+    double **result = create_empty_matrix(col_v, row_v);
     for (int i = 0; i < row_v; i++) {
         for (int j = 0; j < col_v; j++) {
             result[j][i] = mat[i][j];
         }
     }
-//    double end_time = omp_get_wtime();
-//    printf("transpose_matrix time: %f\n", end_time - start_time);
     return result;
 }
 
-float *transpose(float *d, size_t row, size_t col) {
-    float *t = create_empty_vector(row * col);
-    double start_time = omp_get_wtime();
-
+double *transpose(double *d, size_t row, size_t col) {
+    double *t = create_empty_vector(row * col);
 #pragma omp parallel for
-    for (int i = 0; i < row; ++i) {
-        for (int j = 0; j < col; ++j) {
+    for (int i = 0; i < row; ++i)
+        for (int j = 0; j < col; ++j)
             t[row * j + i] = d[col * i + j];
-        }
-    }
-
-    double end_time = omp_get_wtime();
-    printf("first transpose: %f\n", end_time - start_time);
     return t;
 }
 
-float **transpose_matrix_parallel(float **mat, size_t row_v, size_t col_v) {
+double **transpose_matrix_parallel(double **mat, size_t row_v, size_t col_v) {
 
-    float **result = create_empty_matrix(col_v, row_v);
-//    double start_time = omp_get_wtime();
-    int i, j;
-#pragma omp parallel shared(mat, result) private(i, j)
-    {
-#pragma omp for  schedule(static)
-        for (int i = 0; i < row_v; i++) {
-            for (int j = 0; j < col_v; j++) {
-                result[j][i] = mat[i][j];
-            }
-        }
-    }
-//    double end_time = omp_get_wtime();
-//    printf("transpose_matrix time: %f\n", end_time - start_time);
+    double **result = create_empty_matrix(col_v, row_v);
+
+#pragma omp parallel for
+    for (int i = 0; i < row_v; i++)
+        for (int j = 0; j < col_v; j++)
+            result[j][i] = mat[i][j];
     return result;
 }
 
-float *mul_matrix_vector_parallel(float **matrix, float *vector, size_t row_mat, size_t col_mat, size_t len) {
+double *mul_matrix_vector_parallel(double **matrix, double *vector, size_t row_mat, size_t col_mat, size_t len) {
     if (col_mat != len) {
         fprintf(stderr, "incompatible matrix and vector sizes for multiplication\n");
         exit(EXIT_FAILURE);
     }
-    float *result = create_empty_vector(len);
-    int i, j;
-//    double start_time = omp_get_wtime();
-#pragma omp parallel shared(matrix, result, vector) private(i, j)
-    {
-#pragma omp for  schedule(static)
-        for (i = 0; i < row_mat; i++) {
-            for (j = 0; j < col_mat; j++) {
-                result[i] += matrix[i][j] * vector[j];
-            }
-        }
-    }
-//    double end_time = omp_get_wtime();
-//    printf("mul_matrix_vector_parallel time: %f\n", end_time - start_time);
-    return result;
-}
-
-float *mul_matrix_vector_sequential(float **matrix, float *vector, size_t row_mat, size_t col_mat, size_t len) {
-    int i;
-    int j;
-    float *result = create_empty_vector(len);
-    for (i = 0; i < row_mat; i++) {
-        for (j = 0; j < col_mat; j++) {
+    double *result = create_empty_vector(len);
+#pragma omp parallel for
+    for (int i = 0; i < row_mat; i++)
+        for (int j = 0; j < col_mat; j++)
             result[i] += matrix[i][j] * vector[j];
-        }
-    }
+    return result;
+}
+
+double *mul_matrix_vector_sequential(double **matrix, double *vector, size_t row_mat, size_t col_mat, size_t len) {
+    double *result = create_empty_vector(len);
+    for (int i = 0; i < row_mat; i++)
+        for (int j = 0; j < col_mat; j++)
+            result[i] += matrix[i][j] * vector[j];
     return result;
 }
 
 
-float *mul_vector_matrix_parallel(float **matrix, float *vector, size_t row_mat, size_t col_mat, size_t len) {
+double *mul_vector_matrix_parallel(double **matrix, double *vector, size_t row_mat, size_t col_mat, size_t len) {
     if (len != row_mat) {
         fprintf(stderr, "incompatible matrix and vector sizes for multiplication\n");
         exit(EXIT_FAILURE);
     }
-    float *result = create_empty_vector(len);
-    int i, j;
-    double start_time = omp_get_wtime();
-#pragma omp parallel shared(matrix, result, vector) private(i, j)
-    {
-#pragma omp for  schedule(static)
-        for (i = 0; i < col_mat; i++) {
-            for (j = 0; j < len; j++) {
-                result[i] += vector[j] * matrix[j][i];
-            }
-        }
-    }
-    double end_time = omp_get_wtime();
-    printf("mul_vector_matrix_parallel time: %f\n", end_time - start_time);
-    return result;
-}
-
-float *mul_vector_matrix_sequential(float **matrix, float *vector, size_t row_mat, size_t col_mat, size_t len) {
-    if (len != row_mat) {
-        fprintf(stderr, "incompatible matrix and vector sizes for multiplication\n");
-        exit(EXIT_FAILURE);
-    }
-    float *result = create_empty_vector(len);
-    int i, j;
-    for (i = 0; i < col_mat; i++) {
-        for (j = 0; j < len; j++) {
+    double *result = create_empty_vector(len);
+#pragma omp parallel for
+    for (int i = 0; i < col_mat; i++)
+        for (int j = 0; j < len; j++)
             result[i] += vector[j] * matrix[j][i];
-        }
-    }
     return result;
 }
 
-float *mul_vector_matrix_parallel_with_matrix_transpose(float **matrix, float *vector, size_t row_mat, size_t col_mat,
+double *mul_vector_matrix_sequential(double **matrix, double *vector, size_t row_mat, size_t col_mat, size_t len) {
+    if (len != row_mat) {
+        fprintf(stderr, "incompatible matrix and vector sizes for multiplication\n");
+        exit(EXIT_FAILURE);
+    }
+    double *result = create_empty_vector(len);
+    for (int i = 0; i < col_mat; i++)
+        for (int j = 0; j < len; j++)
+            result[i] += vector[j] * matrix[j][i];
+    return result;
+}
+
+double *mul_vector_matrix_parallel_with_matrix_transpose(double **matrix, double *vector, size_t row_mat, size_t col_mat,
                                                         size_t len) {
     if (len != row_mat) {
         fprintf(stderr, "incompatible matrix and vector sizes for multiplication\n");
         exit(EXIT_FAILURE);
     }
-    float *result = create_empty_vector(len);
-    float **matrix_transpose = transpose_matrix_parallel(matrix, row_mat, col_mat);
-    int i, j;
-//    double start_time = omp_get_wtime();
-#pragma omp parallel shared(matrix_transpose, result, vector) private(i, j)
-    {
-#pragma omp for  schedule(static)
-        for (i = 0; i < col_mat; i++) {
-            for (j = 0; j < len; j++) {
-                result[i] += matrix_transpose[i][j] * vector[j];
-            }
-        }
-    }
-//    double end_time = omp_get_wtime();
-//    printf("mul_vector_matrix_parallel_with_matrix_transpose time: %f\n", end_time - start_time);
+    double *result = create_empty_vector(len);
+    double **matrix_transpose = transpose_matrix_parallel(matrix, row_mat, col_mat);
+#pragma omp parallel for
+    for (int i = 0; i < col_mat; i++)
+        for (int j = 0; j < len; j++)
+            result[i] += matrix_transpose[i][j] * vector[j];
     return result;
 }
 
-float *mul_vector_matrix_sequential_with_matrix_transpose(float **matrix, float *vector, size_t row_mat, size_t col_mat,
+double *mul_vector_matrix_sequential_with_matrix_transpose(double **matrix, double *vector, size_t row_mat, size_t col_mat,
                                                           size_t len) {
     if (len != row_mat) {
         fprintf(stderr, "incompatible matrix and vector sizes for multiplication\n");
         exit(EXIT_FAILURE);
     }
-    float *result = create_empty_vector(len);
-    float **matrix_transpose = transpose_matrix_sequential(matrix, row_mat, col_mat);
-    int i, j;
-    double start_time = omp_get_wtime();
-    for (i = 0; i < col_mat; i++) {
-        for (j = 0; j < len; j++) {
+    double *result = create_empty_vector(len);
+    double **matrix_transpose = transpose_matrix_sequential(matrix, row_mat, col_mat);
+    for (int i = 0; i < col_mat; i++)
+        for (int j = 0; j < len; j++)
             result[i] += matrix_transpose[i][j] * vector[j];
-        }
-    }
-    double end_time = omp_get_wtime();
-    printf("mul_vector_matrix_sequential_with_matrix_transpose time: %f\n", end_time - start_time);
     return result;
 }
 
-float **outer_vector_vector_parallel(float *vec1, float *vec2, size_t len1, size_t len2) {
-    float **result = create_empty_matrix(len1, len2);
-    int i, j;
-#pragma omp parallel shared(vec1, vec2, result) private(i, j)
-    {
-#pragma omp for  schedule(static)
-        for (i = 0; i < len1; i++) {
-            for (j = 0; j < len2; j++) {
-                result[i][j] = vec1[i] * vec2[j];
-            }
-        }
-    }
+double **outer_vector_vector_parallel(double *vec1, double *vec2, size_t len1, size_t len2) {
+    double **result = create_empty_matrix(len1, len2);
+#pragma omp parallel for
+    for (int i = 0; i < len1; i++)
+        for (int j = 0; j < len2; j++)
+            result[i][j] = vec1[i] * vec2[j];
     return result;
 }
 
-float **outer_vector_vector_sequential(float *vec1, float *vec2, size_t len1, size_t len2) {
-    float **result = create_empty_matrix(len1, len2);
-    int i, j;
-        for (i = 0; i < len1; i++) {
-            for (j = 0; j < len2; j++) {
-                result[i][j] = vec1[i] * vec2[j];
-            }
-        }
+double **outer_vector_vector_sequential(double *vec1, double *vec2, size_t len1, size_t len2) {
+    double **result = create_empty_matrix(len1, len2);
+    for (int i = 0; i < len1; i++)
+        for (int j = 0; j < len2; j++)
+            result[i][j] = vec1[i] * vec2[j];
     return result;
 }
 
-float inner_vector_vector_parallel(float *vec1, float *vec2, size_t len1) {
-    float result;
-    int i;
-#pragma omp parallel shared(vec1, vec2, result) private(i)
-    {
-#pragma omp for  schedule(static)
-        for (i = 0; i < len1; i++) {
-            result += vec1[i] * vec2[i];
-        }
-    }
-    return result;
+double inner_vector_vector_parallel(double *vec1, double *vec2, size_t len1) {
+    double sum = 0.0;
+#pragma omp parallel for reduction(+:sum)
+    for (int i = 0; i < len1; i++)
+        sum += vec1[i] * vec2[i];
+    return sum;
 }
-float inner_vector_vector_sequential(float *vec1, float *vec2, size_t len1) {
-    float result;
-    int i;
-        for (i = 0; i < len1; i++) {
-            result += vec1[i] * vec2[i];
-        }
-    return result;
+
+double inner_vector_vector_sequential(double *vec1, double *vec2, size_t len1) {
+    double sum=0.0;
+    for (int i = 0; i < len1; i++) {
+        sum = sum + vec1[i] * vec2[i];
+    }
+    return sum;
 }
 
 /**
@@ -410,47 +319,55 @@ float inner_vector_vector_sequential(float *vec1, float *vec2, size_t len1) {
  * @param v is K*1 vector
  * @return
  */
-float ** sherman_morrison_parallel(float **A_inv, float *u, float *v, size_t size) {
+double **sherman_morrison_parallel(double **A_inv, double *u, double *v, size_t size) {
 
     //num1 = (A^-1)(u) --size--> n*1
     //num2 = (v^T)(A^-1) --size--> 1*n
     //numerator --size--> n*n
-    float *num1 = mul_matrix_vector_parallel(A_inv, u, size, size, size);
-    float *num2 = mul_vector_matrix_parallel_with_matrix_transpose(A_inv, v, size, size, size);
-    float **numerator = outer_vector_vector_parallel(num1, num2, size, size);
+    double *num1 = mul_matrix_vector_parallel(A_inv, u, size, size, size);
+    printf("num1 par value is %f, %f\n", num1[324], num1[839]);
+    double *num2 = mul_vector_matrix_parallel_with_matrix_transpose(A_inv, v, size, size, size);
+    printf("num2 par value is %f, %f\n", num2[291], num2[643]);
+    double **numerator = outer_vector_vector_parallel(num1, num2, size, size);
+    printf("numerator par value is %f, %f\n", numerator[321][402], numerator[100][390]);
 
     //den1 = (v^T)(A^-1) = num2 --size--> 1*n
-    float *den1 = num2;
-    float denominator = 1 + inner_vector_vector_parallel(den1, u, size);
+    double *den1 = num2;
+    double denominator = 1 + inner_vector_vector_parallel(den1, u, size);
+    printf("denominator par is %f\n", denominator);
 
-    float **second_term = mul_matrix_scalar_parallel(numerator, 1.0 / denominator, size, size);
+    double **second_term = mul_matrix_scalar_parallel(numerator, 1.0 / denominator, size, size);
 
 
-    float **result = sub_matrix_parallel(A_inv, second_term, size, size, size, size);
+    double **result = sub_matrix_parallel(A_inv, second_term, size, size, size, size);
     return result;
 }
 
-float ** sherman_morrison_sequential(float **A_inv, float *u, float *v, size_t size) {
+double **sherman_morrison_sequential(double **A_inv, double *u, double *v, size_t size) {
 
     //num1 = (A^-1)(u) --size--> n*1
     //num2 = (v^T)(A^-1) --size--> 1*n
     //numerator --size--> n*n
-    float *num1 = mul_matrix_vector_sequential(A_inv, u, size, size, size);
-    float *num2 = mul_vector_matrix_sequential(A_inv, v, size, size, size);
-    float **numerator = outer_vector_vector_sequential(num1, num2, size, size);
+    double *num1 = mul_matrix_vector_sequential(A_inv, u, size, size, size);
+    printf("num1 seq value is %f, %f\n", num1[324], num1[839]);
+    double *num2 = mul_vector_matrix_sequential(A_inv, v, size, size, size);
+    printf("num2 seq value is %f, %f\n", num2[291], num2[643]);
+    double **numerator = outer_vector_vector_sequential(num1, num2, size, size);
+    printf("numerator seq value is %f, %f\n", numerator[321][402], numerator[100][390]);
 
     //den1 = (v^T)(A^-1) = num2 --size--> 1*n
-    float *den1 = num2;
-    float denominator = 1 + inner_vector_vector_sequential(den1, u, size);
+    double *den1 = num2;
+    double denominator = 1 + inner_vector_vector_sequential(den1, u, size);
+    printf("denominator seq is %f\n", denominator);
 
-    float **second_term = mul_matrix_scalar_sequential(numerator, 1.0 / denominator, size, size);
+    double **second_term = mul_matrix_scalar_sequential(numerator, 1.0 / denominator, size, size);
 
 
-    float **result = sub_matrix_sequential(A_inv, second_term, size, size, size, size);
+    double **result = sub_matrix_sequential(A_inv, second_term, size, size, size, size);
     return result;
 }
 
-float **read_matrix(size_t *rows, size_t *cols, const char *filename) {
+double **read_matrix(size_t *rows, size_t *cols, const char *filename) {
     if (rows == NULL || cols == NULL || filename == NULL)
         return NULL;
 
@@ -464,7 +381,7 @@ float **read_matrix(size_t *rows, size_t *cols, const char *filename) {
         return NULL;
     }
 
-    float **matrix = NULL, **tmp;
+    double **matrix = NULL, **tmp;
 
     char line[1024];
 
@@ -522,8 +439,8 @@ float **read_matrix(size_t *rows, size_t *cols, const char *filename) {
     return matrix;
 }
 
-float *mat_to_vec(float **mat, size_t row_mat, size_t col_mat) {
-    float *vector = (float *) malloc(sizeof(float) * row_mat * col_mat);
+double *mat_to_vec(double **mat, size_t row_mat, size_t col_mat) {
+    double *vector = (double *) malloc(sizeof(double) * row_mat * col_mat);
     for (size_t i = 0; i < row_mat; i++) {
         for (size_t j = 0; j < col_mat; j++) {
             vector[i * col_mat + j] = mat[i][j];
@@ -532,14 +449,14 @@ float *mat_to_vec(float **mat, size_t row_mat, size_t col_mat) {
     return vector;
 }
 
-float **gauss_jordan_matrix_inverse(float **A, size_t size) {
-    float **I, temp;
+double **gauss_jordan_matrix_inverse(double **A, size_t size) {
+    double **I, temp;
     int i, j, k;
 
-    I = (float **) malloc(
-            size * sizeof(float *));            //memory allocation for indentity matrix I(matsize X matsize)
+    I = (double **) malloc(
+            size * sizeof(double *));            //memory allocation for indentity matrix I(matsize X matsize)
     for (i = 0; i < size; i++)
-        I[i] = (float *) malloc(size * sizeof(float));
+        I[i] = (double *) malloc(size * sizeof(double));
     for (i = 0; i < size; i++)                                  //automatically initialize the unit matrix, e.g.
         for (j = 0; j < size; j++)                              //  -       -
             if (i == j)                                        // | 1  0  0 |
@@ -579,10 +496,10 @@ void main() {
 
 /*
     size_t row_A_inv, col_A_inv, row_u, col_u, row_v, col_v, row_vT, col_vT;
-    float *u, *v, *vT;
-    float **A_inv = read_matrix(&row_A_inv, &col_A_inv, "A_inv.dat");
-    float **u_matrix = read_matrix(&row_u, &col_u, "u.dat");
-    float **v_matrix = read_matrix(&row_v, &col_v, "v.dat");
+    double *u, *v, *vT;
+    double **A_inv = read_matrix(&row_A_inv, &col_A_inv, "A_inv.dat");
+    double **u_matrix = read_matrix(&row_u, &col_u, "u.dat");
+    double **v_matrix = read_matrix(&row_v, &col_v, "v.dat");
 
     u = mat_to_vec(u_matrix, row_u, col_u);
     v = mat_to_vec(v_matrix, row_v, col_v);
@@ -593,45 +510,55 @@ void main() {
     show_vector(v, row_v);
 
 
-    float **morrison = sherman_morrison(A_inv, u, v, row_A_inv, col_A_inv, row_u, col_u, row_v, col_v);
+    double **morrison = sherman_morrison(A_inv, u, v, row_A_inv, col_A_inv, row_u, col_u, row_v, col_v);
     show_matrix(morrison, row_A_inv, col_A_inv);*/
 
-/*
-    size_t size = 20;
-//    float *vector = create_random_vector(size)
+//    size_t size = 5000;
+//    double *vector1 = create_random_vector(size);
+//    Sleep(5000);
+//    double *vector2 = create_random_vector(size);
+//
+//    double seq = inner_vector_vector_sequential(vector1, vector2, size);
+//    double par = inner_vector_vector_parallel(vector1, vector2, size);
+//
+//    printf("seq and par are: %f, %f\n",seq, par);
 
-    float **matrix1 = create_random_matrix(size, size);
-    Sleep(5000);
-    float **matrix2 = create_random_matrix(size, size);
+//    printf("-----------------vector1------------");
+//    show_vector(vector1, size);
+//    printf("-----------------vector2------------");
+//    show_vector(vector2, size);
 
-    double start_time_seq = omp_get_wtime();
-    float **add_seq = add_matrix_sequential(matrix1, matrix2, size, size, size, size);
-    double end_time_seq = omp_get_wtime();
+//    double **matrix1 = create_random_matrix(size, size);
+//    Sleep(5000);
+//    double **matrix2 = create_random_matrix(size, size);
+//
+//    double start_time_seq = omp_get_wtime();
+//    double **add_seq = add_matrix_sequential(matrix1, matrix2, size, size, size, size);
+//    double end_time_seq = omp_get_wtime();
+//
+//    double start_time_par = omp_get_wtime();
+//    double **add_par = add_matrix_parallel(matrix1, matrix2, size, size, size, size);
+//    double end_time_par = omp_get_wtime();
+//
+//    printf("add_par time: %f\n", end_time_par - start_time_par);
+//    printf("add_seq time: %f\n", end_time_seq - start_time_seq);
+//
+//
+//    printf("---------------matrix1------------");
+//    show_matrix(matrix1, size, size);
+//    printf("---------------matrix2------------");
+//    show_matrix(matrix2, size, size);
+//
+//    printf("---------------sub_seq------------");
+//    show_matrix(add_seq,size,size);
+//    printf("---------------sub_par------------");
+//    show_matrix(add_par,size,size);
+//
 
-    double start_time_par = omp_get_wtime();
-    float **add_par = add_matrix_parallel(matrix1, matrix2, size, size, size, size);
-    double end_time_par = omp_get_wtime();
-
-    printf("add_par time: %f\n", end_time_par - start_time_par);
-    printf("add_seq time: %f\n", end_time_seq - start_time_seq);
-
-
-    printf("---------------matrix1------------");
-    show_matrix(matrix1, size, size);
-    printf("---------------matrix2------------");
-    show_matrix(matrix2, size, size);
-
-    printf("---------------sub_seq------------");
-    show_matrix(add_seq,size,size);
-    printf("---------------sub_par------------");
-    show_matrix(add_par,size,size);
-*/
 
 
 
-
-
-//    float *mat = mat_to_vec(matrix, size, size);
+//    double *mat = mat_to_vec(matrix, size, size);
 //
 //    transpose_matrix_sequential(matrix, size, size);
 //    transpose(mat, size, size);
@@ -644,53 +571,62 @@ void main() {
 //    mul_vector_matrix_parallel_with_matrix_transpose(matrix, vector, size, size, size);
 
 
-    size_t size = 4000;
-    float *v = create_random_boolean_vector(size);
+    size_t size = 10000;
+    double *v = create_random_boolean_vector(size);
 //    printf("v vector:");
 //    show_vector(v, size);
-    float *u = create_random_vector(size);
+    double *u = create_random_vector(size);
 //    printf("u vector:");
 //    show_vector(u, size);
-    float **uvT = outer_vector_vector_sequential(u, v, size, size);
+    double **uvT = outer_vector_vector_sequential(u, v, size, size);
 //    printf("uvT matrix:");
 //    show_matrix(uvT, size, size);
-    float **A = create_random_matrix(size, size);
+    double **A = create_random_matrix(size, size);
 //    printf("A matrix:");
 //    show_matrix(A, size, size);
-    float **Anew = add_matrix_sequential(A, uvT, size, size, size, size);
+    double **Anew = add_matrix_sequential(A, uvT, size, size, size, size);
 //    printf("Anew matrix:");
 //    show_matrix(Anew, size, size);
-    float **A_inv = gauss_jordan_matrix_inverse(A, size);
+//    double start_time0 = omp_get_wtime();
+//    double **A_inv = gauss_jordan_matrix_inverse(A, size);
+//    printf("inverse time: %f\n", omp_get_wtime() - start_time0);
 //    printf("A_inv matrix:");
 //    show_matrix(A_inv, size, size);
 //    double start_time = omp_get_wtime();
-//    float **Anew_inv_gauss_jordan = gauss_jordan_matrix_inverse(Anew, size);
+//    double **Anew_inv_gauss_jordan = gauss_jordan_matrix_inverse(Anew, size);
 //    double end_time = omp_get_wtime();
 //    printf("gauss_jordan time: %f\n", end_time - start_time);
 //    printf("Anew_inv_gauss_jordan matrix:");
 //    show_matrix(Anew_inv_gauss_jordan, size, size);
     double start_time1 = omp_get_wtime();
-    float **Anew_inv_sherman_morrison_seq = sherman_morrison_sequential(A_inv, u, v, size);
+    double **Anew_inv_sherman_morrison_seq = sherman_morrison_sequential(A, u, v, size);
     double end_time1 = omp_get_wtime();
-    printf("sherman_morrison seq time: %f\n", end_time1 - start_time1);
+
 //    printf("Anew_inv_sherman_morrison matrix:");
 //    show_matrix(Anew_inv_sherman_morrison, size, size);
     double start_time2 = omp_get_wtime();
-    float **Anew_inv_sherman_morrison_par = sherman_morrison_parallel(A_inv, u, v, size);
+    double **Anew_inv_sherman_morrison_par = sherman_morrison_parallel(A, u, v, size);
     double end_time2 = omp_get_wtime();
+
+    printf("sherman_morrison seq time: %f\n", end_time1 - start_time1);
     printf("sherman_morrison par time: %f\n", end_time2 - start_time2);
 
+    printf("some values for test: %f, %f\n", Anew_inv_sherman_morrison_seq[43][27],
+           Anew_inv_sherman_morrison_par[43][27]);
 
 
 
-//    float **A = create_random_matrix(size, size);
+
+
+
+//    double **A = create_random_matrix(size, size);
 //    printf("A matrix:");
 //    show_matrix(A, size, size);
 //    Sleep(5000);
-//    float **B = create_random_matrix(size, size);
+//    double **B = create_random_matrix(size, size);
 //    printf("B matrix:");
 //    show_matrix(B, size, size);
-//    float **add = add_matrix(A, B, size, size, size, size);
+//    double **add = add_matrix(A, B, size, size, size, size);
 //    printf("add matrix:");
 //    show_matrix(add, size, size);
 
