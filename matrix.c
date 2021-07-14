@@ -57,7 +57,7 @@ void show_matrix(double **matrix, size_t row, size_t col) {
     puts("");
     for (size_t i = 0; i < row; i++) {
         for (size_t j = 0; j < col; j++)
-            printf("%-3f ", matrix[i][j]);
+            printf("%f ", matrix[i][j]);
         puts("");
     }
 }
@@ -114,9 +114,8 @@ double **add_matrix_sequential(double **mat1, double **mat2, int row1, int col1,
         exit(EXIT_FAILURE);
     }
     double **result = create_empty_matrix(row1, col1);
-    int i, j;
-    for (i = 0; i < row1; i++)
-        for (j = 0; j < col1; j++)
+    for (int i = 0; i < row1; i++)
+        for (int j = 0; j < col1; j++)
             result[i][j] = mat1[i][j] + mat2[i][j];
     return result;
 }
@@ -252,11 +251,11 @@ double *mul_vector_matrix_parallel_with_matrix_transpose(double **matrix, double
         exit(EXIT_FAILURE);
     }
     double *result = create_empty_vector(len);
-    double **matrix_transpose = transpose_matrix_parallel(matrix, row_mat, col_mat);
+//    double **matrix_transpose = transpose_matrix_parallel(matrix, row_mat, col_mat);
 #pragma omp parallel for
     for (int i = 0; i < col_mat; i++)
         for (int j = 0; j < len; j++)
-            result[i] += matrix_transpose[i][j] * vector[j];
+            result[i] += matrix[j][i] * vector[j];
     return result;
 }
 
@@ -325,16 +324,12 @@ double **sherman_morrison_parallel(double **A_inv, double *u, double *v, size_t 
     //num2 = (v^T)(A^-1) --size--> 1*n
     //numerator --size--> n*n
     double *num1 = mul_matrix_vector_parallel(A_inv, u, size, size, size);
-    printf("num1 par value is %f, %f\n", num1[324], num1[839]);
     double *num2 = mul_vector_matrix_parallel_with_matrix_transpose(A_inv, v, size, size, size);
-    printf("num2 par value is %f, %f\n", num2[291], num2[643]);
     double **numerator = outer_vector_vector_parallel(num1, num2, size, size);
-    printf("numerator par value is %f, %f\n", numerator[321][402], numerator[100][390]);
 
     //den1 = (v^T)(A^-1) = num2 --size--> 1*n
     double *den1 = num2;
     double denominator = 1 + inner_vector_vector_parallel(den1, u, size);
-    printf("denominator par is %f\n", denominator);
 
     double **second_term = mul_matrix_scalar_parallel(numerator, 1.0 / denominator, size, size);
 
@@ -349,16 +344,12 @@ double **sherman_morrison_sequential(double **A_inv, double *u, double *v, size_
     //num2 = (v^T)(A^-1) --size--> 1*n
     //numerator --size--> n*n
     double *num1 = mul_matrix_vector_sequential(A_inv, u, size, size, size);
-    printf("num1 seq value is %f, %f\n", num1[324], num1[839]);
     double *num2 = mul_vector_matrix_sequential(A_inv, v, size, size, size);
-    printf("num2 seq value is %f, %f\n", num2[291], num2[643]);
     double **numerator = outer_vector_vector_sequential(num1, num2, size, size);
-    printf("numerator seq value is %f, %f\n", numerator[321][402], numerator[100][390]);
 
     //den1 = (v^T)(A^-1) = num2 --size--> 1*n
     double *den1 = num2;
     double denominator = 1 + inner_vector_vector_sequential(den1, u, size);
-    printf("denominator seq is %f\n", denominator);
 
     double **second_term = mul_matrix_scalar_sequential(numerator, 1.0 / denominator, size, size);
 
@@ -494,141 +485,58 @@ double **gauss_jordan_matrix_inverse(double **A, size_t size) {
  */
 void main() {
 
-/*
-    size_t row_A_inv, col_A_inv, row_u, col_u, row_v, col_v, row_vT, col_vT;
-    double *u, *v, *vT;
-    double **A_inv = read_matrix(&row_A_inv, &col_A_inv, "A_inv.dat");
-    double **u_matrix = read_matrix(&row_u, &col_u, "u.dat");
-    double **v_matrix = read_matrix(&row_v, &col_v, "v.dat");
-
-    u = mat_to_vec(u_matrix, row_u, col_u);
-    v = mat_to_vec(v_matrix, row_v, col_v);
-
-
-
-    show_vector(u, row_u);
-    show_vector(v, row_v);
-
-
-    double **morrison = sherman_morrison(A_inv, u, v, row_A_inv, col_A_inv, row_u, col_u, row_v, col_v);
-    show_matrix(morrison, row_A_inv, col_A_inv);*/
-
-//    size_t size = 5000;
-//    double *vector1 = create_random_vector(size);
-//    Sleep(5000);
-//    double *vector2 = create_random_vector(size);
-//
-//    double seq = inner_vector_vector_sequential(vector1, vector2, size);
-//    double par = inner_vector_vector_parallel(vector1, vector2, size);
-//
-//    printf("seq and par are: %f, %f\n",seq, par);
-
-//    printf("-----------------vector1------------");
-//    show_vector(vector1, size);
-//    printf("-----------------vector2------------");
-//    show_vector(vector2, size);
-
-//    double **matrix1 = create_random_matrix(size, size);
-//    Sleep(5000);
-//    double **matrix2 = create_random_matrix(size, size);
-//
-//    double start_time_seq = omp_get_wtime();
-//    double **add_seq = add_matrix_sequential(matrix1, matrix2, size, size, size, size);
-//    double end_time_seq = omp_get_wtime();
-//
-//    double start_time_par = omp_get_wtime();
-//    double **add_par = add_matrix_parallel(matrix1, matrix2, size, size, size, size);
-//    double end_time_par = omp_get_wtime();
-//
-//    printf("add_par time: %f\n", end_time_par - start_time_par);
-//    printf("add_seq time: %f\n", end_time_seq - start_time_seq);
-//
-//
-//    printf("---------------matrix1------------");
-//    show_matrix(matrix1, size, size);
-//    printf("---------------matrix2------------");
-//    show_matrix(matrix2, size, size);
-//
-//    printf("---------------sub_seq------------");
-//    show_matrix(add_seq,size,size);
-//    printf("---------------sub_par------------");
-//    show_matrix(add_par,size,size);
-//
-
-
-
-
-//    double *mat = mat_to_vec(matrix, size, size);
-//
-//    transpose_matrix_sequential(matrix, size, size);
-//    transpose(mat, size, size);
-//
-//    mul_matrix_vector_sequential(matrix, vector, size, size, size);
-//    mul_matrix_vector_parallel(matrix, vector, size, size, size);
-//    mul_vector_matrix_sequential(matrix, vector, size, size, size);
-//    mul_vector_matrix_sequential_with_matrix_transpose(matrix, vector, size, size, size);
-//    mul_vector_matrix_parallel(matrix, vector, size, size, size);
-//    mul_vector_matrix_parallel_with_matrix_transpose(matrix, vector, size, size, size);
-
-
-    size_t size = 10000;
+    size_t size = 64;
+    size_t niter = 100000;
+    double micro = .000001;
     double *v = create_random_boolean_vector(size);
-//    printf("v vector:");
+//    printf("--------v-----------");
 //    show_vector(v, size);
+//    Sleep(1000);
     double *u = create_random_vector(size);
-//    printf("u vector:");
+//    printf("--------u-----------");
 //    show_vector(u, size);
-    double **uvT = outer_vector_vector_sequential(u, v, size, size);
-//    printf("uvT matrix:");
-//    show_matrix(uvT, size, size);
+//    double **uvT = outer_vector_vector_sequential(u, v, size, size);
+//    Sleep(1000);
     double **A = create_random_matrix(size, size);
-//    printf("A matrix:");
+//    double **Anew = add_matrix_sequential(A, uvT, size, size, size, size);
+//    printf("----------A-----------");
 //    show_matrix(A, size, size);
-    double **Anew = add_matrix_sequential(A, uvT, size, size, size, size);
-//    printf("Anew matrix:");
-//    show_matrix(Anew, size, size);
-//    double start_time0 = omp_get_wtime();
-//    double **A_inv = gauss_jordan_matrix_inverse(A, size);
-//    printf("inverse time: %f\n", omp_get_wtime() - start_time0);
-//    printf("A_inv matrix:");
-//    show_matrix(A_inv, size, size);
-//    double start_time = omp_get_wtime();
-//    double **Anew_inv_gauss_jordan = gauss_jordan_matrix_inverse(Anew, size);
-//    double end_time = omp_get_wtime();
-//    printf("gauss_jordan time: %f\n", end_time - start_time);
-//    printf("Anew_inv_gauss_jordan matrix:");
-//    show_matrix(Anew_inv_gauss_jordan, size, size);
-    double start_time1 = omp_get_wtime();
-    double **Anew_inv_sherman_morrison_seq = sherman_morrison_sequential(A, u, v, size);
-    double end_time1 = omp_get_wtime();
+    double start_Ainv_GJ = omp_get_wtime();
+    double **Ainv_GJ = gauss_jordan_matrix_inverse(A, size);
+    double end_Ainv_GJ = omp_get_wtime();
+//    printf("----------Ainv-----------");
+//    show_matrix(Ainv_GJ, size, size);
+//    double start_Anewinv_GJ = omp_get_wtime();
+//    double **Anewinv_GJ = gauss_jordan_matrix_inverse(Anew, size);
+//    double end_Anewinv_GJ = omp_get_wtime();
 
-//    printf("Anew_inv_sherman_morrison matrix:");
-//    show_matrix(Anew_inv_sherman_morrison, size, size);
-    double start_time2 = omp_get_wtime();
-    double **Anew_inv_sherman_morrison_par = sherman_morrison_parallel(A, u, v, size);
-    double end_time2 = omp_get_wtime();
+    double start_Anewinv_SM_seq = omp_get_wtime();
+#pragma omp parallel for
+    for (int i = 0; i < niter; i++) {
+        Ainv_GJ = sherman_morrison_sequential(Ainv_GJ, u, v, size);
+    }
+    double end_Anewinv_SM_seq = omp_get_wtime();
 
-    printf("sherman_morrison seq time: %f\n", end_time1 - start_time1);
-    printf("sherman_morrison par time: %f\n", end_time2 - start_time2);
-
-    printf("some values for test: %f, %f\n", Anew_inv_sherman_morrison_seq[43][27],
-           Anew_inv_sherman_morrison_par[43][27]);
+//    double start_Anewinv_SM_par = omp_get_wtime();
+//    double **Anewinv_SM_par = sherman_morrison_parallel(Ainv_GJ, u, v, size);
+//    double end_Anewinv_SM_par =omp_get_wtime();
+//    printf("--------Ainv%i-----------",i);
+//    show_matrix(Ainv_GJ, size,size);
+    printf("Matrix size: %d * %d\n", size, size);
+    printf("Niter: %d\n", niter);
+    printf("Ainv_GJ time: %f\n", end_Ainv_GJ - start_Ainv_GJ);
+    printf("SM_seq time: %f s\n", end_Anewinv_SM_seq - start_Anewinv_SM_seq);
+    printf("Total SM_seq time: %f \xC2\xB5s\n", (end_Anewinv_SM_seq - start_Anewinv_SM_seq)/micro);
+    printf("Average SM_seq time: %f \xC2\xB5s\n", (end_Anewinv_SM_seq - start_Anewinv_SM_seq)/micro/niter);
 
 
 
 
 
 
-//    double **A = create_random_matrix(size, size);
-//    printf("A matrix:");
-//    show_matrix(A, size, size);
-//    Sleep(5000);
-//    double **B = create_random_matrix(size, size);
-//    printf("B matrix:");
-//    show_matrix(B, size, size);
-//    double **add = add_matrix(A, B, size, size, size, size);
-//    printf("add matrix:");
-//    show_matrix(add, size, size);
-
+//    printf("some Anewinv values for test GJ, SMseq, SMpar: %f, %f, %f\n",
+//           Anewinv_GJ[38][23],
+//           Anewinv_SM_seq[38][23],
+//           Anewinv_SM_par[38][23]);
 
 }
