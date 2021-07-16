@@ -1,7 +1,8 @@
-#include <omp.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
-void main() {
-    int micro = 1E5;
-    printf("%d",1E5);
+
+void main () {
+
 }
