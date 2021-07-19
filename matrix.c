@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <synchapi.h>
 #include <omp.h>
+
 double **gauss_jordan_matrix_inverse(double **A, size_t size) {
     double **I, temp;
     int i, j, k;
@@ -44,6 +45,7 @@ double **gauss_jordan_matrix_inverse(double **A, size_t size) {
     }
     return I;
 }
+
 double **create_empty_matrix(size_t row, size_t col) {
     double **matrix;
     matrix = (double **) calloc(row, sizeof(double *));
@@ -92,7 +94,6 @@ double **create_random_matrix(int row, int col) {
 }
 
 void show_matrix(double **matrix, size_t row, size_t col) {
-    puts("");
     for (size_t i = 0; i < row; i++) {
         for (size_t j = 0; j < col; j++)
             printf("%f ", matrix[i][j]);
@@ -101,7 +102,6 @@ void show_matrix(double **matrix, size_t row, size_t col) {
 }
 
 void show_vector(double *matrix, size_t len) {
-    puts("");
     for (size_t i = 0; i < len; i++) {
         printf("%lf ", matrix[i]);
         puts("");
@@ -340,7 +340,6 @@ double inner_vector_vector_sequential(double *vec1, double *vec2, size_t len1) {
 }
 
 
-
 /**
  * this function calculate inverse of rank-1 update of matrix A.
  * The rank-1 update of A is shown by (A+uv^T)
@@ -475,27 +474,65 @@ double *mat_to_vec(double **mat, size_t row_mat, size_t col_mat) {
     return vector;
 }
 
-void smCalc(double **Ainv, double *u, double *v, size_t size, double *result_mat_vec, double *result_vec_mat,
-            double **result_mat_mat) {
-    double den = 0.0;
-    for (int i = 0; i < size; i++) {
-        double dot_mat_vec = 0, dot_vec_mat = 0;
-        for (int j = 0; j < size; j++) {
-            dot_mat_vec += Ainv[i][j] * u[j];
-            dot_vec_mat += Ainv[j][i] * v[j];
+void smCalcSequential(double **Ainv_GJ, double *u, double *v, size_t size, size_t niter, double *result_mat_vec,
+                      double *result_vec_mat) {
+//    double **temp = create_empty_matrix(size, size);
+    for (int iter = 0; iter < niter; iter++) {
+        double den = 0.0;
+        for (int i = 0; i < size; i++) {
+            double dot_mat_vec = 0, dot_vec_mat = 0;
+            for (int j = 0; j < size; j++) {
+                dot_mat_vec += Ainv_GJ[i][j] * u[j];
+                dot_vec_mat += Ainv_GJ[j][i] * v[j];
+            }
+            result_mat_vec[i] = dot_mat_vec;
+            result_vec_mat[i] = dot_vec_mat;
+            den += dot_vec_mat * u[i];
         }
-        result_mat_vec[i] = dot_mat_vec;
-        result_vec_mat[i] = dot_vec_mat;
-        den += dot_vec_mat * u[i];
+        for (int k = 0; k < size; k++)
+            for (int l = 0; l < size; l++)
+                Ainv_GJ[k][l] - (result_mat_vec[k] * result_vec_mat[l] / (1 + den));
+//                temp[k][l] = Ainv_GJ[k][l] - (result_mat_vec[k] * result_vec_mat[l] / (1 + den));
     }
-    for (int i = 0; i < size; i++)
-        for (int j = 0; j < size; j++)
-            result_mat_mat[i][j] = result_mat_vec[i] * result_vec_mat[j] / (1 + den);
+//    printf("-------------------thread sequential %d-------------\n", omp_get_thread_num());
+//    show_matrix(temp, size, size);
+}
 
-    for (int i = 0; i < size; i++)
-        for (int j = 0; j < size; j++)
-            Ainv[i][j] = Ainv[i][j] - result_mat_mat[i][j];
+void smCalcParallel(double **Ainv_GJ, double *u, double *v, size_t size, size_t niter) {
 
+#pragma omp parallel
+    {
+        double *result_mat_vec = create_empty_vector(size);
+        double *result_vec_mat = create_empty_vector(size);
+//        double **Ainv_private = create_empty_matrix(size, size);
+#pragma omp for
+        for (int iter = 0; iter < niter; iter++) {
+            double den = 0.0;
+            for (int i = 0; i < size; i++) {
+                double dot_mat_vec = 0, dot_vec_mat = 0;
+                for (int j = 0; j < size; j++) {
+                    dot_mat_vec += Ainv_GJ[i][j] * u[j];
+                    dot_vec_mat += Ainv_GJ[j][i] * v[j];
+                }
+                result_mat_vec[i] = dot_mat_vec;
+                result_vec_mat[i] = dot_vec_mat;
+                den += dot_vec_mat * u[i];
+            }
+            for (int k = 0; k < size; k++)
+                for (int l = 0; l < size; l++)
+                    Ainv_GJ[k][l] - (result_mat_vec[k] * result_vec_mat[l] / (1 + den));
+//                    Ainv_private[k][l] = Ainv_GJ[k][l] - (result_mat_vec[k] * result_vec_mat[l] / (1 + den));
+        }
+//#pragma omp critical
+//        {
+//            printf("-------------------thread parallel %d-------------\n", omp_get_thread_num());
+//            for (size_t z = 0; z < size; z++) {
+//                for (size_t y = 0; y < size; y++)
+//                    printf("%f ", Ainv_private[z][y]);
+//                puts("");
+//            }
+//        }
+    }
 }
 
 /**
@@ -503,22 +540,22 @@ void smCalc(double **Ainv, double *u, double *v, size_t size, double *result_mat
  */
 void main() {
 
-    size_t size = 64;
+    size_t size = 16;
     size_t niter = 10000;
     double micro = .000001;
     double *v = create_random_boolean_vector(size);
-//    printf("--------v-----------");
+//    printf("--------v-----------\n");
 //    show_vector(v, size);
 //    Sleep(1000);
     double *u = create_random_vector(size);
-//    printf("--------u-----------");
+//    printf("--------u-----------\n");
 //    show_vector(u, size);
 //    double **uvT = outer_vector_vector_sequential(u, v, size, size);
 //    Sleep(1000);
     double **A = create_random_matrix(size, size);
-//    double **Anew = add_matrix_sequential(A, uvT, size, size, size, size);
-//    printf("----------A-----------");
+//    printf("----------A-----------\n");
 //    show_matrix(A, size, size);
+//    double **Anew = add_matrix_sequential(A, uvT, size, size, size, size);
     double start_Ainv_GJ = omp_get_wtime();
     double **Ainv_GJ = gauss_jordan_matrix_inverse(A, size);
     double end_Ainv_GJ = omp_get_wtime();
@@ -530,24 +567,27 @@ void main() {
 
     double *result_mat_vec = create_empty_vector(size);
     double *result_vec_mat = create_empty_vector(size);
-    double **result_mat_mat = create_empty_matrix(size, size);
+//    double **result_mat_mat = create_empty_matrix(size, size);
 
-    double start_Anewinv_SM_seq = omp_get_wtime();
-    for (int i = 0; i < niter; i++)
-        smCalc(Ainv_GJ, u, v, size, result_mat_vec, result_vec_mat, result_mat_mat);
-    double end_Anewinv_SM_seq = omp_get_wtime();
+    double start_sm_seq = omp_get_wtime();
+    smCalcSequential(Ainv_GJ, u, v, size, niter, result_mat_vec, result_vec_mat);
+    double end_sm_seq = omp_get_wtime();
+
+    double start_sm_par = omp_get_wtime();
+    smCalcParallel(Ainv_GJ, u, v, size, niter);
+    double end_sm_par = omp_get_wtime();
 
 //    double start_Anewinv_SM_par = omp_get_wtime();
 //    double **Anewinv_SM_par = sherman_morrison_parallel(Ainv_GJ, u, v, size);
 //    double end_Anewinv_SM_par =omp_get_wtime();
-//    printf("--------sm%i-----------", i);
+//    printf("--------sm-----------");
 //    show_matrix(Ainv_GJ, size, size);
     printf("Matrix size: %d * %d\n", size, size);
     printf("Niter: %d\n", niter);
-    printf("Ainv_GJ time: %f\n", end_Ainv_GJ - start_Ainv_GJ);
-    printf("SM_seq time: %f s\n", end_Anewinv_SM_seq - start_Anewinv_SM_seq);
-    printf("Total SM_seq time: %f \xC2\xB5s\n", (end_Anewinv_SM_seq - start_Anewinv_SM_seq) / micro);
-    printf("Average SM_seq time: %f \xC2\xB5s\n", (end_Anewinv_SM_seq - start_Anewinv_SM_seq) / micro / niter);
+    printf("SM_seq time: %f s\n", end_sm_seq - start_sm_seq);
+    printf("Average SM_seq time: %f \xC2\xB5s\n", (end_sm_seq - start_sm_seq) / micro / niter);
+    printf("SM_par time: %f s\n", end_sm_par - start_sm_par);
+    printf("Average SM_par time: %f \xC2\xB5s\n", (end_sm_par - start_sm_par) / micro / niter);
 
 
 
