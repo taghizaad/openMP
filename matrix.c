@@ -585,9 +585,9 @@ void main() {
     printf("Matrix size: %d * %d\n", size, size);
     printf("Niter: %d\n", niter);
     printf("SM_seq time: %f s\n", end_sm_seq - start_sm_seq);
-    printf("Average SM_seq time: %f \xC2\xB5s\n", (end_sm_seq - start_sm_seq) / micro / niter);
+    printf("Average SM_seq time: %f ms\n", (end_sm_seq - start_sm_seq) / micro / niter);
     printf("SM_par time: %f s\n", end_sm_par - start_sm_par);
-    printf("Average SM_par time: %f \xC2\xB5s\n", (end_sm_par - start_sm_par) / micro / niter);
+    printf("Average SM_par time: %f ms\n", (end_sm_par - start_sm_par) / micro / niter);
 
 
 
