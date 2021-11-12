@@ -1,7 +1,7 @@
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 
 void sub_matrix(int row1, int col1, int row2, int col2, double mat1[row1][col1], double mat2[row2][col2]) {
     if (row1 != row2 || col1 != col2) {
@@ -35,10 +35,17 @@ void mul_matrix_matrix(int row1, int col1, int row2, int col2, double mat1[row1]
                 mat1mat2[i][j] += mat1[i][k] * mat2[k][j];
 }
 
-void show_matrix_double(int row, int col, double matrix[row][col]) {
+void show_matrix(int row, int col, double matrix[row][col]) {
     for (size_t i = 0; i < row; i++) {
         for (size_t j = 0; j < col; j++)
             printf("%f ", matrix[i][j]);
+        puts("");
+    }
+}
+
+void show_vector(double *matrix, size_t len) {
+    for (size_t i = 0; i < len; i++) {
+        printf("%f ", matrix[i]);
         puts("");
     }
 }
@@ -89,19 +96,19 @@ void identityMatrix(int n, double mat[n][n]) {
     }
 }
 
-void matrixInversion(double mat[2][2]) {
-    double det = 1 / (mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0]);
-    int a = mat[0][0];
-    mat[0][0] = mat[1][1] * det;
-    mat[0][1] = -mat[0][1] * det;
-    mat[1][0] = -mat[1][0] * det;
-    mat[1][1] = a * det;
+void invertMatrix(double mat[2][2]) {
+    double invDet = 1 / (mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0]);
+    double a = mat[0][0];
+    mat[0][0] = mat[1][1] * invDet;
+    mat[0][1] = -mat[0][1] * invDet;
+    mat[1][0] = -mat[1][0] * invDet;
+    mat[1][1] = a * invDet;
 }
 
-
-void smw(int kthTimeStep, int numOfNodes, int numOfSwitches, int numOfTimeSteps, int numOfChangedNodes, int gon,
-         double TT[numOfSwitches][numOfTimeSteps], double Abase[numOfNodes][numOfNodes],
-         double AbaseInv[numOfNodes][numOfNodes], double switchNodeMat[numOfSwitches][numOfChangedNodes]) {
+void smwModified(int ts, int numOfNodes, int numOfSwitches, int numOfTimeSteps, int numOfChangedNodes, int gon,
+                 double TT[numOfSwitches][numOfTimeSteps], double Abase[numOfNodes][numOfNodes],
+                 double AbaseInv[numOfNodes][numOfNodes],
+                 double switchNodeMat[numOfSwitches][numOfChangedNodes]) {
 
     double u[numOfNodes][2];
     double v[2][numOfNodes];
@@ -109,20 +116,20 @@ void smw(int kthTimeStep, int numOfNodes, int numOfSwitches, int numOfTimeSteps,
     double AbaseInvU[numOfNodes][2];
     double D[2][2];
     double vAbaseInvU[2][2];
-    double AbaseInvUDinv[numOfNodes][2];
-    double AbaseInvUDinvV[numOfNodes][numOfNodes];
     double AbaseInvUDinvVAbaseInv[numOfNodes][numOfNodes];
+    double vAbaseInv[2][numOfNodes];
+    double DinvVAbaseInv[2][numOfNodes];
 
+    int nodeCount, i, j, k;
 
-    int nodeCount;
 //    i represents switches
-    for (int i = 0; i < 6; i++) {
-        if (TT[i][kthTimeStep] != TT[i][0]) {
+    for (i = 0; i < 6; i++) {
+        if (TT[i][ts] != TT[i][0]) {
             nodeCount = 0;
             memset(u, 0, sizeof(u));
             memset(v, 0, sizeof(v));
 //            j represents nodes
-            for (int j = 0; j < 5; ++j) {
+            for (j = 0; j < 5; ++j) {
                 if (switchNodeMat[i][j] == 1) {
                     if (nodeCount == 0) {
                         u[j][0] = gon;
@@ -159,39 +166,109 @@ void smw(int kthTimeStep, int numOfNodes, int numOfSwitches, int numOfTimeSteps,
             //D <-- eye(2) + v * AbaseInv * u ~ eye(2) + v * AbaseInvU
             add_matrix(2, 2, 2, 2, D, vAbaseInvU);
             //D <-- Dinv
-            matrixInversion(D);
-            //AbaseInvUDinv <-- AbaseInv * u * Dinv
-            memset(AbaseInvUDinv, 0, sizeof(AbaseInvUDinv));
-            mul_matrix_matrix(numOfNodes, 2, 2, 2, AbaseInvU, D, AbaseInvUDinv);
-            //AbaseInvUDinvV <-- AbaseInv * u * Dinv * v
-            memset(AbaseInvUDinvV, 0, sizeof(AbaseInvUDinvV));
-            mul_matrix_matrix(numOfNodes, 2, 2, numOfNodes, AbaseInvUDinv, v, AbaseInvUDinvV);
-            //AbaseInvUDinvVAbaseInv <--AbaseInv * u * Dinv * v * AbaseInv
+            invertMatrix(D);
+
+
+            //vAbaseInv <-- v * AbaseInv
+            int firstRowFlag = 0;
+            int secondRowFlag = 0;
+            for (k = 0; k < numOfNodes; ++k) {
+                if (firstRowFlag == 1 && secondRowFlag == 1) {
+                    break;
+                }
+                if (v[0][k] == 1) {
+                    for (int j = 0; j < numOfNodes; ++j) {
+                        vAbaseInv[0][j] = AbaseInv[k][j];
+                    }
+                    firstRowFlag = 1;
+                }
+                if (v[1][k] == 1) {
+                    for (int j = 0; j < numOfNodes; ++j) {
+                        vAbaseInv[1][j] = AbaseInv[k][j];
+                    }
+                    secondRowFlag = 1;
+                }
+            }
+
+            //DinvVAbaseInv <-- Dinv * vAbaseInv
+            memset(DinvVAbaseInv, 0, sizeof(DinvVAbaseInv));
+            mul_matrix_matrix(2, 2, 2, numOfNodes, D, vAbaseInv, DinvVAbaseInv);
+
+            //AbaseInvUDinvVAbaseInv <-- AbaseInvU * DinvVAbaseInv
             memset(AbaseInvUDinvVAbaseInv, 0, sizeof(AbaseInvUDinvVAbaseInv));
-            mul_matrix_matrix(numOfNodes, numOfNodes, numOfNodes, numOfNodes, AbaseInvUDinvV, AbaseInv,
-                              AbaseInvUDinvVAbaseInv);
+            mul_matrix_matrix(numOfNodes, 2, 2, numOfNodes, AbaseInvU, DinvVAbaseInv, AbaseInvUDinvVAbaseInv);
+
+
             //AbaseInv <-- AbaseInv - AbaseInv * u * Dinv * v * AbaseInv
             sub_matrix(numOfNodes, numOfNodes, numOfNodes, numOfNodes, AbaseInv, AbaseInvUDinvVAbaseInv);
+
         }
     }
 }
 
+void
+fillAin(int ts, int rowAbaseInv, int colAbaseInv, int rowAinv, int colAinv,
+        double AbaseInv[rowAbaseInv][colAbaseInv],
+        double Ainv[rowAinv][colAinv]) {
+    for (int i = 0; i < rowAbaseInv; ++i) {
+        for (int j = 0; j < colAbaseInv; ++j) {
+            Ainv[ts * rowAbaseInv + i][j] = AbaseInv[i][j];
+        }
+    }
+}
+
+void renewAbaseAndAbaseInv(int row, int col, double Abase[row][col], double Abase0[row][col],
+                           double AbaseInv[row][col],
+                           double AbaseInv0[row][col]) {
+    int i, j;
+    for (i = 0; i < row; ++i) {
+        for (j = 0; j < col; ++j) {
+            Abase[i][j] = Abase0[i][j];
+            AbaseInv[i][j] = AbaseInv0[i][j];
+        }
+    }
+}
 
 void main() {
-    int numOfNodes = 16, numOfSwitches = 6, numOfChangedNodes = 5, numOfTimeSteps = 64, gon = 1000, kthTimeStep = 63;
-    double Abase[numOfNodes][numOfNodes], AbaseInv[numOfNodes][numOfNodes],
-            switchNodeMat[numOfSwitches][numOfChangedNodes], TT[numOfSwitches][numOfTimeSteps];
-    readFileDouble(numOfNodes, numOfNodes, Abase, "../HH.txt");
 
-    readFileDouble(numOfNodes, numOfNodes, AbaseInv, "../IH.txt");
+    int numOfNodes = 16, numOfSwitches = 6, numOfChangedNodes = 5, numOfTimeSteps = 64, gon = 1000;
+    double Abase[numOfNodes][numOfNodes], Abase0[numOfNodes][numOfNodes],
+            AbaseInv[numOfNodes][numOfNodes], AbaseInv0[numOfNodes][numOfNodes],
+            switchNodeMat[numOfSwitches][numOfChangedNodes], TT[numOfSwitches][numOfTimeSteps],
+            Ainv[numOfNodes * numOfTimeSteps][numOfNodes], timeConsumption[numOfTimeSteps];
+
+    readFileDouble(numOfNodes, numOfNodes, Abase, "../Abase1.txt");
+    readFileDouble(numOfNodes, numOfNodes, Abase0, "../Abase1.txt");
+
+    readFileDouble(numOfNodes, numOfNodes, AbaseInv, "../Abase1Inv.txt");
+    readFileDouble(numOfNodes, numOfNodes, AbaseInv0, "../Abase1Inv.txt");
 
     readFileDouble(numOfSwitches, numOfChangedNodes, switchNodeMat, "../switchNodeMat.txt");
 
     readFileDouble(numOfSwitches, numOfTimeSteps, TT, "../TT.txt");
 
-    smw(kthTimeStep, numOfNodes, numOfSwitches, numOfTimeSteps, numOfChangedNodes, gon, TT, Abase, AbaseInv,
-        switchNodeMat);
-    show_matrix_double(numOfNodes, numOfNodes, AbaseInv);
+    fillAin(0, numOfNodes, numOfNodes, numOfNodes * numOfTimeSteps, numOfNodes, AbaseInv, Ainv);
+
+    int niter = 100;
+    double time1, timedif;
+    time1 = (double) clock() / CLOCKS_PER_SEC;
+
+    int i, j;
+    for (i = 0; i < niter; ++i) {
+        for (j = 1; j < numOfTimeSteps; ++j) {
+            smwModified(j, numOfNodes, numOfSwitches, numOfTimeSteps, numOfChangedNodes, gon, TT, Abase, AbaseInv,
+                        switchNodeMat);
+            fillAin(j, numOfNodes, numOfNodes, numOfNodes * numOfTimeSteps, numOfNodes, AbaseInv, Ainv);
+            renewAbaseAndAbaseInv(numOfNodes, numOfNodes, Abase, Abase0, AbaseInv, AbaseInv0);
+        }
+    }
+
+//    show_matrix(numOfNodes * numOfTimeSteps, numOfNodes, Ainv);
+
+    timedif = (((double) clock()) / CLOCKS_PER_SEC) - time1;
+
+    printf("The elapsed time for %d time-steps is %f Microseconds\n", numOfTimeSteps, timedif / niter * 1000000);
+    printf("The elapsed time for each time-steps is %f Microseconds\n", timedif / niter / numOfTimeSteps * 1000000);
 
 }
 
