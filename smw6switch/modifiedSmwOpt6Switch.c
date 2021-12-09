@@ -253,21 +253,21 @@ void main() {
             switchNodeMat[numOfSwitches][numOfChangedNodes], TT[numOfSwitches][numOfTimeSteps],
             Ainv[numOfNodes * numOfTimeSteps][numOfNodes], timeConsumption[numOfTimeSteps];
 
-    readFileDouble(numOfNodes, numOfNodes, Abase1, "../Abase1.txt");
-    readFileDouble(numOfNodes, numOfNodes, Abase1_0, "../Abase1.txt");
+    readFileDouble(numOfNodes, numOfNodes, Abase1, "../smw6switch/Abase1.txt");
+    readFileDouble(numOfNodes, numOfNodes, Abase1_0, "../smw6switch/Abase1.txt");
 
-    readFileDouble(numOfNodes, numOfNodes, Abase1Inv, "../Abase1Inv.txt");
-    readFileDouble(numOfNodes, numOfNodes, Abase1Inv_0, "../Abase1Inv.txt");
+    readFileDouble(numOfNodes, numOfNodes, Abase1Inv, "../smw6switch/Abase1Inv.txt");
+    readFileDouble(numOfNodes, numOfNodes, Abase1Inv_0, "../smw6switch/Abase1Inv.txt");
 
-    readFileDouble(numOfNodes, numOfNodes, Abase2, "../Abase2.txt");
-    readFileDouble(numOfNodes, numOfNodes, Abase2_0, "../Abase2.txt");
+    readFileDouble(numOfNodes, numOfNodes, Abase2, "../smw6switch/Abase2.txt");
+    readFileDouble(numOfNodes, numOfNodes, Abase2_0, "../smw6switch/Abase2.txt");
 
-    readFileDouble(numOfNodes, numOfNodes, Abase2Inv, "../Abase2Inv.txt");
-    readFileDouble(numOfNodes, numOfNodes, Abase2Inv_0, "../Abase2Inv.txt");
+    readFileDouble(numOfNodes, numOfNodes, Abase2Inv, "../smw6switch/Abase2Inv.txt");
+    readFileDouble(numOfNodes, numOfNodes, Abase2Inv_0, "../smw6switch/Abase2Inv.txt");
 
-    readFileDouble(numOfSwitches, numOfChangedNodes, switchNodeMat, "../switchNodeMat.txt");
+    readFileDouble(numOfSwitches, numOfChangedNodes, switchNodeMat, "../smw6switch/switchNodeMat.txt");
 
-    readFileDouble(numOfSwitches, numOfTimeSteps, TT, "../TT.txt");
+    readFileDouble(numOfSwitches, numOfTimeSteps, TT, "../smw6switch/TT.txt");
 
     fillAin(0, numOfNodes, numOfNodes, numOfNodes * numOfTimeSteps, numOfNodes, Abase1Inv, Ainv);
 //    fillAin(numOfTimeSteps-1, numOfNodes, numOfNodes, numOfNodes * numOfTimeSteps, numOfNodes, Abase2Inv, Ainv);
