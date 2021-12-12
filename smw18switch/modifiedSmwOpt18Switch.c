@@ -74,7 +74,7 @@ void mul_matrix_matrix(int row1, int col1, int row2, int col2, double *mat1, dou
     for (int i = 0; i < row1; i++)
         for (int j = 0; j < col2; j++)
             for (int k = 0; k < col1; k++)
-                result[i * col2 + j] += mat1[i * col1 + k] * mat2[k * col2 + j];
+                result[i * col2 + j] = result[i * col2 + j] + mat1[i * col1 + k] * mat2[k * col2 + j];
 }
 
 void show_matrix(double *matrix, size_t row, size_t col) {
@@ -82,7 +82,7 @@ void show_matrix(double *matrix, size_t row, size_t col) {
     for (size_t i = 0; i < row; i++) {
         for (size_t j = 0; j < col; j++) {
 //            printf("(%d,%d)%f ", i, j, matrix[i * col + j]);
-            printf("%f ", matrix[i * col + j]);
+            printf("%15.15e ", matrix[i * col + j]);
         }
         printf("\n");
     }
@@ -172,6 +172,7 @@ void invertMatrix(double *mat, int dim) {
     if (dim == 1) {
         if (fabs(mat[0]) > 0.000001) {
             mat[0] = 1 / mat[0];
+//            show_matrix(mat, 1, 1);
         } else {
             fprintf(stderr, "division by ZERO error!");
             exit(-1);
@@ -179,6 +180,7 @@ void invertMatrix(double *mat, int dim) {
     }
     if (dim == 2) {
         double det = mat[0] * mat[3] - mat[1] * mat[2];
+//        show_matrix(&det, 1, 1);
         if (fabs(det) > 0.000001) {
             double invDet = 1 / det;
             double a = mat[0];
@@ -232,9 +234,8 @@ void renewAbaseAndAbaseInv(int row, int col, double Abase[row][col], double Abas
     }
 }
 
-void
-smwModified(int numOfNodes, int numOfSwitches, int gon, double *baseArr, double *curTs, double *AbaseInv,
-            double *switchNodeMat) {
+void smwModified(int numOfNodes, int numOfSwitches, int gon, double *baseArr, double *curTs, double *AbaseInv,
+                 double *switchNodeMat) {
 
     double *u, *v, *uv, *vAbaseInv, *vAbaseInvU, *D, *DinvVAbaseInv, *AbaseInvU, *AbaseInvUDinvVAbaseInv;
     int *affectedNodes, nodeCount;
@@ -286,8 +287,12 @@ smwModified(int numOfNodes, int numOfSwitches, int gon, double *baseArr, double 
                 }
             }
 
-            show_matrix(u, numOfNodes, affectedNodes[numOfNodes]);
-            show_matrix(v, affectedNodes[numOfNodes], numOfNodes);
+//            show_matrix(u, numOfNodes, affectedNodes[numOfNodes]);
+//            show_matrix(v, affectedNodes[numOfNodes], numOfNodes);
+//            uv = (double *) calloc(numOfNodes * numOfNodes, sizeof(double));
+//            mul_matrix_matrix(numOfNodes, affectedNodes[numOfNodes], affectedNodes[numOfNodes], numOfNodes, u, v, uv);
+//            show_matrix(uv, numOfNodes, numOfNodes);
+
 //            show_matrix(AbaseInv, numOfNodes, numOfNodes);
 
             //vAbaseInv <-- v * AbaseInv
@@ -299,26 +304,32 @@ smwModified(int numOfNodes, int numOfSwitches, int gon, double *baseArr, double 
             mul_matrix_matrix(affectedNodes[numOfNodes], numOfNodes, numOfNodes, affectedNodes[numOfNodes], vAbaseInv,
                               u, vAbaseInvU);
 
-            show_matrix(vAbaseInvU, affectedNodes[numOfNodes], affectedNodes[numOfNodes]);
+//            show_matrix(vAbaseInvU, affectedNodes[numOfNodes], affectedNodes[numOfNodes]);
 
-            show_matrix(AbaseInv, numOfNodes, numOfNodes);
+//            show_matrix(AbaseInv, numOfNodes, numOfNodes);
 
             //D <-- I
             D = (double *) malloc(sizeof(double) * affectedNodes[numOfNodes] * affectedNodes[numOfNodes]);
             identityMatrix(affectedNodes[numOfNodes], D);
 
-
             //D <-- I + v * AbaseInv * u ==== I + vAbaseInvU
             add_matrix(affectedNodes[numOfNodes], affectedNodes[numOfNodes], affectedNodes[numOfNodes],
                        affectedNodes[numOfNodes], D, vAbaseInvU);
 
+//            show_matrix(D, affectedNodes[numOfNodes], affectedNodes[numOfNodes]);
+
             //D <-- Dinv
             invertMatrix(D, affectedNodes[numOfNodes]);
+
+//            show_matrix(D, affectedNodes[numOfNodes], affectedNodes[numOfNodes]);
 
             //DinvVAbaseInv <-- Dinv * vAbaseInv
             DinvVAbaseInv = (double *) malloc(sizeof(double) * affectedNodes[numOfNodes] * numOfNodes);
             mul_matrix_matrix(affectedNodes[numOfNodes], affectedNodes[numOfNodes], affectedNodes[numOfNodes],
                               numOfNodes, D, vAbaseInv, DinvVAbaseInv);
+
+            show_matrix(DinvVAbaseInv,affectedNodes[numOfNodes],numOfNodes);
+
 
             //AbaseInvU <-- AbaseInv * u
             AbaseInvU = (double *) malloc(sizeof(double) * numOfNodes * affectedNodes[numOfNodes]);
@@ -329,20 +340,22 @@ smwModified(int numOfNodes, int numOfSwitches, int gon, double *baseArr, double 
             mul_matrix_matrix(numOfNodes, affectedNodes[numOfNodes], affectedNodes[numOfNodes], numOfNodes, AbaseInvU,
                               DinvVAbaseInv, AbaseInvUDinvVAbaseInv);
 
+//            show_matrix(AbaseInvUDinvVAbaseInv, numOfNodes, numOfNodes);
+
             //AbaseInv <-- AbaseInv - AbaseInv * u * Dinv * v * AbaseInv === AbaseInv - AbaseInvUDinvVAbaseInv
             sub_matrix(numOfNodes, numOfNodes, numOfNodes, numOfNodes, AbaseInv, AbaseInvUDinvVAbaseInv);
 
             // Deallocate allocated memory blocks
-            /*       free(affectedNodes);
+                   free(affectedNodes);
                    free(u);
                    free(v);
-                   free(uv);
+//                   free(uv);
                    free(vAbaseInv);
                    free(D);
                    free(vAbaseInvU);
                    free(DinvVAbaseInv);
                    free(AbaseInvU);
-                   free(AbaseInvUDinvVAbaseInv);*/
+                   free(AbaseInvUDinvVAbaseInv);
         }
     }
 }
@@ -415,8 +428,11 @@ void smwModifiedWithWholeD(int numOfNodes, int numOfSwitches, int gon, double *b
         }
     }
 
-    show_matrix(u, numOfNodes, numOfAllAffectedNodes);
-    show_matrix(v, numOfAllAffectedNodes, numOfNodes);
+//    show_matrix(u, numOfNodes, numOfAllAffectedNodes);
+//    show_matrix(v, numOfAllAffectedNodes, numOfNodes);
+    uv = (double *) calloc(numOfNodes * numOfNodes, sizeof(double));
+    mul_matrix_matrix(numOfNodes, numOfAllAffectedNodes, numOfAllAffectedNodes, numOfNodes, u, v, uv);
+//    show_matrix(uv, numOfNodes, numOfNodes);
 
     //vAbaseInv <-- v * AbaseInv
     vAbaseInv = (double *) malloc(sizeof(double) * numOfAllAffectedNodes * numOfNodes);
@@ -544,8 +560,8 @@ void main() {
 
 //    show_matrix(Abase1Inv, numOfNodes, numOfNodes);
 //    show_matrix(Ainv, numOfNodes, numOfNodes);
-    smwModified(numOfNodes, numOfSwitches, gon, baseArr, curTs, Ainv, switchNodeMat);
-    show_matrix(Ainv, numOfNodes, numOfNodes);
+    smwModifiedWithWholeD(numOfNodes, numOfSwitches, gon, baseArr, curTs, Ainv, switchNodeMat);
+//    show_matrix(Ainv, numOfNodes, numOfNodes);
 //                fillAin(j, numOfNodes, numOfNodes, numOfNodes * numOfTimeSteps, numOfNodes, Abase1Inv, Ainv);
 //                renewAbaseAndAbaseInv(numOfNodes, numOfNodes, Abase1, Abase1_0, Abase1Inv, Abase1Inv_0);
 //        }

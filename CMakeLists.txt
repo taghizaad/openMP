@@ -12,7 +12,7 @@ endif()
 find_package(Matlab)
 matlab_add_mex(
         NAME openMp
-        SRC smw.c arrayProduct.c
+        SRC smw.c arrayProduct.c smwWithWholeD.c
 )
 
 add_executable(piProgramFalseSharingWithPadding piProgramFalseSharingWithPadding.c)

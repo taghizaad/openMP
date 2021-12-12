@@ -7,15 +7,16 @@ numOfSwitches = size(TT,1);
 numOfNodes = size(HH,2);
 base2 = TT(:,end);
 base1 = TT(:,1);
+
+
 Abase1Inv = IH(1:21,:);
 Abase2Inv = IH(end-20:end,:);
-
 ss = zeros(length(TT)-2,4);
 ss(1,:)=[];
 Ainv=[];
 tic
 %for i=2:length(TT)-1
-for i=2:100
+for i=2:1000
     curTT = TT(:,i);
     selectedBase = chooseBase(base1,base2,curTT);
     %selectedBase = base1;
