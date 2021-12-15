@@ -9,6 +9,10 @@ base2 = TT(:,end);
 base1 = TT(:,1);
 Abase1Inv = IH(1:21,:);
 Abase2Inv = IH(end-20:end,:);
+Abase1 = HH(1:21,:);
+Abase2 = HH(end-20:end,:);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 ss = zeros(length(TT)-2,4);
 ss(1,:)=[];
