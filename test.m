@@ -1,54 +1,74 @@
-clear
+
+loadData;
 clc
-All3levelmatrixML
-load("switchNodeMat.mat");
-switchNodeMatResh = reshape(switchNodeMat.',1,[]);
-numOfSwitches = size(TT,1);
-numOfNodes = size(HH,2);
-base2 = TT(:,end);
-base1 = TT(:,1);
-Abase1Inv = IH(1:21,:);
-Abase2Inv = IH(end-20:end,:);
-Abase1 = HH(1:21,:);
-Abase2 = HH(end-20:end,:);
+base1Ind = 1;
+base2Ind = len;
+base1 = ttd(:,base1Ind);
+Z01inv = HH(base1Ind*numOfNodes-(numOfNodes-1):base1Ind*numOfNodes,:);
+Z01 = IH(base1Ind*numOfNodes-(numOfNodes-1):base1Ind*numOfNodes,:);
+base2 = ttd(:,base2Ind);
+Z02inv = HH(base2Ind*numOfNodes-(numOfNodes-1):base2Ind*numOfNodes,:);
+Z02 = IH(base2Ind*numOfNodes-(numOfNodes-1):base2Ind*numOfNodes,:);
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+X_ls = zeros(numOfNodes,len);
+X = zeros(numOfNodes,len);
+dif_ls = zeros(1,len);
+dif = zeros(1,len);
 
-ss = zeros(length(TT)-2,4);
-ss(1,:)=[];
-Ainv=[];
+
+start = 1;
+stop = len;
 tic
-%for i=2:length(TT)-1
-for i=2:100
-    curTT = TT(:,i);
-    selectedBase = chooseBase(base1,base2,curTT);
-    %selectedBase = base1;
-    if(all(selectedBase == base1))
-        AbaseInv = Abase1Inv;
+for i=start:stop
+    curttd = ttd(:,i);
+    b = B(:,i);
+    if(sum(abs(curttd-base1) == 0) >= sum(abs(curttd-base2) == 0))
+        baseInd = base1Ind;
+        basettd = base1;
+        Z0 = Z01;
+    else
+        baseInd = base2Ind;
+        basettd = base2;
+        Z0 = Z02;
     end
-    if(all(selectedBase == base2))
-        AbaseInv = Abase2Inv;
+    %-----------------smwwd impl---------------------------
+    sw = find(TT(:,i) ~= TT(:,baseInd));
+    U = zeros(numOfNodes,length(sw));
+    V = zeros(numOfNodes,length(sw));
+    for j=1:length(sw)
+        nodes = find(switchNodeMat(sw(j),:)==1);
+        if(length(nodes) == 1)
+            U(nodes,j) = curttd(sw(j)) - basettd(sw(j));
+            V(nodes,j) = 1;
+        else
+            U(nodes(1),j) = curttd(sw(j)) - basettd(sw(j));
+            V(nodes(1),j) = 1;
+            U(nodes(2),j) = basettd(sw(j)) - curttd(sw(j));
+            V(nodes(2),j) = -1;
+        end
     end
-    AbaseInvResh = reshape(AbaseInv.',1,[]);
-    %fprintf('*****************%d*************************\n', i);
-    [AinvResh,invArr] = smwWithWholeD(numOfNodes,numOfSwitches,gon,selectedBase,curTT,switchNodeMatResh,AbaseInvResh);
-    %ss(i,:) = [i invArr selectedBase(1)];
-    Ainv = [Ainv;transpose(reshape(AinvResh,size(AbaseInv,2),[]))];
+    [x_ls,info] = smi(b,U,V,Z0);
+    X_ls(:,i) = x_ls;
+    X(:,i) = IH((i-1)*numOfNodes+1:i*numOfNodes,:)*b;
+    dif_ls(i) = norm(x_ls-x);
+    dif(i)= norm(X(:,i) -x);
+    
+end
+toc
+[val_ls,ind_ls]=max(dif_ls);
+[val,ind]=max(dif);
+Z = info.Z;
+I = eye(numOfNodes);
+den = (1+V(:,1)'*Z(:,1));
+num = Z(:,1)*V(:,1)';
+invi = I - num/den;
+for i=2:size(V,2)
+    den = 1+V(:,i)'*Z(:,i);
+    num = Z(:,i)*V(:,i)';
+    invi = invi * (I - num/den);
 end
 
-toc
+foo = invi * Z0;
+bar = IH((start-1)*numOfNodes+1:start*numOfNodes,:);
 
- dim1Prob = find(ss(:,2));
- dim2Prob = find(ss(:,3));
-%--------------------------------------------------------------------------------------------------------------%
-
-clc
-cTT = TT(:,dim2Prob(2));
-baseTT = base1;
-AbaseInv = Abase1Inv;
-Ainv =sm(baseTT,cTT,AbaseInv,switchNodeMat,gon,numOfNodes);
-
-
-
-
-
+norm(foo-bar)
