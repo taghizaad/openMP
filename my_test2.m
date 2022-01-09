@@ -2,7 +2,7 @@
 % loadData;
 clc
 base1Ind = 1;
-base2Ind = 1;
+base2Ind = len;
 base1 = ttd(:,base1Ind);
 A01 = HH(base1Ind*numOfNodes-(numOfNodes-1):base1Ind*numOfNodes,:);
 A01inv = IH(base1Ind*numOfNodes-(numOfNodes-1):base1Ind*numOfNodes,:);
@@ -12,13 +12,16 @@ A02inv = IH(base2Ind*numOfNodes-(numOfNodes-1):base2Ind*numOfNodes,:);
 
 b = ones(numOfNodes,1);
 
-difSM = zeros(1,len);
+difX = zeros(1,len);
 difInv = zeros(1,len);
 difReg = zeros(1,len);
 
-start = 244765;
-stop = 244765;
+start = 1;
+stop = len;
 
+lambda = 1e+5;
+L = eye(numOfNodes);
+Z0 = 0*L;
 tic
 for i=start:stop
     curttd = ttd(:,i);
@@ -49,9 +52,9 @@ for i=start:stop
             V(nodes(2),j) = -1;
         end
     end
-    [x_ls,Y] = my_smi(b,U,V,A0);
+    [x_ls,Y] = my_smi2(b,U,V,A0inv,0);
     x = IH((i-1)*numOfNodes+1:i*numOfNodes,:)*b;
-    difSM(i)=norm(x_ls-x);
+    difX(i)=norm(x_ls-x);
     %     inverse = eye(numOfNodes);
     %     for j=size(V,2):-1:1
     %         inverse = inverse * (eye(numOfNodes) - (Y(:,j)*V(:,j)' / (1+V(:,j)'*Y(:,j))));
@@ -61,24 +64,34 @@ for i=start:stop
 
     %%% Regularization %%%
     A = HH((i-1)*numOfNodes+1:i*numOfNodes,:);
-    g = A'*b;
-    [x_reg, info] = shermanMorrisonIteration(g,A,Z0);
+%     g = A'*b;
+%     [x_reg, info] = shermanMorrisonIteration(g,A,Z0);
+     [x_reg, info] = my_smi2(b,U,V,A0inv,1e-17);
     difReg(i)=norm(x_reg-x);
 
     %%%%%%%%%%%%%%%%%%%%%%
 end
 toc
-[valX,indX]=max(difSM)
-[valReg,indReg]=max(difReg);
-% [valInv,indInv]=max(difInv);
+[valX,indX]=max(difX);
+[valInv,indInv]=max(difInv);
 
-% close all
-% subplot(2,1,1)
-% axis = 1:len;
-% plot(axis,difSM)
-% title('norm(x - xSM)')
-% 
-% subplot(2,1,2)
-% plot(axis,difReg)
-% title('norm(x - xReg)')
+close all
+subplot(3,1,1)
+axis = 1:len;
+plot(axis,difX)
+title('norm(x - xSM)')
 
+
+subplot(3,1,2)
+plot(axis,difReg)
+title('norm(x - xReg)')
+
+subplot(3,1,3)
+plot(axis,difX-difReg)
+title('difX-difReg')
+
+mean(difReg<difX)
+figure
+plot(difX,difReg-difX,'.')
+xlabel('difX')
+ylabel('difReg-difX')
