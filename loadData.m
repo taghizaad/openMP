@@ -1,8 +1,7 @@
 clear
 clc
-All3levelmatrixML
+threeLevelMatrix
 load("switchNodeMat.mat");
-switchNodeMatResh = reshape(switchNodeMat.',1,[]);
-numOfSwitches = size(TT,1);
+numOfSwitches = size(ttd,1);
 numOfNodes = size(HH,2);
 len = length(ttd);

@@ -22,8 +22,8 @@ gl3  = gl;
 gc1  = gc;
 gc2  = gc;
 
-Ron  = 1e-3;
-Roff = 1e6;
+Ron  = 1e-3; %1e-6
+Roff = 1e6; %1e9
 
 gon = 1/Ron;
 goff= 1/Roff;

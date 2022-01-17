@@ -1,18 +1,18 @@
 
-%  loadData;
+loadData
 clc
 b = ones(numOfNodes,1);
-
 start = 1;
-stop = 1;
+stop = len;
+difSM=[];
+% allDen = zeros(18,len);
+selectedBase = len; %bin2dec('111111111000000000')+1;
+basettd = ttd(:,selectedBase);
 % tic
 for i=start:stop
     curttd = ttd(:,i);
-    selectedBase = 2;
-    basettd = ttd(:,selectedBase);
     A0 = HH(selectedBase*numOfNodes-(numOfNodes-1):selectedBase*numOfNodes,:);
-    A = HH(i*numOfNodes-(numOfNodes-1):i*numOfNodes,:);
-    %     A0inv = IH(selectedBase*numOfNodes-(numOfNodes-1):selectedBase*numOfNodes,:);
+    A = HH((i-1)*numOfNodes+1:i*numOfNodes,:);
     sw = find(TT(:,i) ~= TT(:,selectedBase));
     U = zeros(numOfNodes,length(sw));
     V = zeros(numOfNodes,length(sw));
@@ -28,10 +28,11 @@ for i=start:stop
             V(nodes(2),j) = -1;
         end
     end
-    [x_ls,Y] = my_smi(b,U,V,A0);
+    [xSM,Y] = my_smi(b,U,V,A0);
     x = IH((i-1)*numOfNodes+1:i*numOfNodes,:)*b;
-    difSM(i)=norm(x_ls-x);
-
+    difSM(i)=norm(xSM-x);
+%     difSMrel(i)=norm(x_ls-x)/norm(x);
+%     AllCount(:,i)= counters;
     %     inverse = eye(numOfNodes);
     %     for j=size(V,2):-1:1
     %         inverse = inverse * (eye(numOfNodes) - (Y(:,j)*V(:,j)' / (1+V(:,j)'*Y(:,j))));
@@ -44,24 +45,32 @@ for i=start:stop
     % U <-- A'
     % V <-- A'
     % A0 <-- lambda^2*L'*L
-    lambda = 1;
+%     lambda = 1;
 %     L = eye(numOfNodes);
-    [x_reg, info] = my_smi(A'*b,A',A',lambda^2*(L'*L));
-    difReg(i)=norm(x_reg-x);
+%     [x_reg, info] = my_smi(A'*b,A',A',lambda^2*(L'*L));
+%     difReg(i)=norm(x_reg-x);
     %%%%%%%%%%%%%%%%%%%%%%
 end
 % toc
-valX=max(difSM)
-valReg=max(difReg)
-% [valInv,indInv]=max(difInv);
+valSM=max(difSM)
+% minDen=zeros(1,len);
+% for t=start:stop
+%     if(t==selectedBase)
+%         continue;
+%     end
+%     foo = allDen(:,t);
+%     minDen(t) = min(foo(foo>0));
+% end
+figure
+semilogy(0:len-1,difSM,'*')
+xlim([0 len-1])
+ylim([1e-8 1])
+% % title(dec2bin(selectedBase-1))
+% xlabel('matrix number')
+% ylabel('|| xSM - x ||')
+% bin2dec('111111111000000000')
 
-% close all
-% subplot(2,1,1)
-% axis = 1:len;
-% plot(axis,difSM)
-% title('norm(x - xSM)')
-%
-% subplot(2,1,2)
-% plot(axis,difReg)
-% title('norm(x - xReg)')
-
+% detVal = zeros(1,len);
+% for t=1:len
+%     detVal(t) = det(HH((t-1)*numOfNodes+1:t*numOfNodes,:));
+% end
